@@ -8,7 +8,6 @@
 #include "Global.h"
 #include "DataTable.h"
 #include "DeviceObjectDictionary.h"
-#include "Commutator.h"
 
 // Functions
 //
@@ -46,8 +45,7 @@ void TIM7_IRQHandler()
 		}
 
 		CONTROL_SafetyIrqTick();
-
-		CONTROL_HandleFrontPanelLamp(COMM_State);
+		CONTROL_HandleFrontPanelLamp();
 
 		TIM_StatusClear(TIM7);
 	}

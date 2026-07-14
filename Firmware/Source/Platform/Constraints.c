@@ -11,7 +11,7 @@ const TableItemConstraint Constraint[DATA_TABLE_WP_START] = {
 		{SFTST_ALLOWED_VOLTAGE_MIN, SFTST_ALLOWED_VOLTAGE_MAX, SFTST_ALLOWED_VOLTAGE_DEF1},	// 0
 		{SFTY_DELAY_MIN, SFTY_DELAY_MAX, SFTY_DELAY_DEF},							// 1
 		{NO, YES, YES},																// 2
-		{0, INT16U_MAX, PMXU_CAN_ID_DEF},											// 3
+		{0, INT16U_MAX, DPN_CAN_ID_DEF},											// 3
 		{NO, YES, NO},																// 4
 		{SFTST_ALLOWED_VOLTAGE_MIN, SFTST_ALLOWED_VOLTAGE_MAX, SFTST_ALLOWED_VOLTAGE_DEF2},	// 5
 		{0, 0, 0},																	// 6

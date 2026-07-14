@@ -9,7 +9,7 @@
 #define EP_COUNT								0		// Количество массивов для чтения
 #define FEP_COUNT								1		// Количество массивов для чтения типа float
 #define VALUES_x_SIZE							0		// Размер массивов
-#define VALUES_DIAG_SIZE						64		// Размер массива диагностических данных и счетчиков (синхронизован с COMMUTATION_TABLE_SIZE)
+#define VALUES_DIAG_SIZE						64		// Размер массива диагностических данных
 #define ENABLE_LOCKING							FALSE	// Защита NV регистров паролем
 
 // Временные параметры
@@ -22,7 +22,6 @@
 // Параметры измерения
 #define ADC_REF_VOLTAGE							3300.0f	// Опорное напряжение (в мВ)
 #define ADC_RESOLUTION							4095	// Разрешение АЦП
-#define ADC_V_CC								150.0f	// Напряжение при замкнутой цепи (в мВ)
 
 
 #endif //  __GLOBAL_H

@@ -21,7 +21,7 @@
 #define SFTY_DELAY_MAX					500
 #define SFTY_DELAY_DEF					200
 //
-#define PMXU_CAN_ID_DEF					100
+#define DPN_CAN_ID_DEF					100
 //
 #define NO								false
 #define YES								true

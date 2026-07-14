@@ -16,15 +16,16 @@
 #include "ZwNFLASH.h"
 #include "ZwSPI.h"
 
+// Выходы остаются от MXU, нужно будет заменить на GPIO DSN
 // Определения для выходных портов
 GPIO_PortPinSettingMacro GPIO_LED				= {GPIOB, Pin_1};	// Мигающий зелёный индикатор на плате
 GPIO_PortPinSettingMacro GPIO_FP_LED			= {GPIOA, Pin_3};	// Индикатор на передней панели
 GPIO_PortPinSettingMacro GPIO_SD_EN				= {GPIOB, Pin_9};	// Формирование напряжения самодиагностики
 //
-// CS сдвиговых регистров на трёх ЭМ (аппаратный SPI1)
-GPIO_PortPinSettingMacro GPIO_SPI_SS1			= {GPIOA, Pin_15};	// InputRelayBoard
-GPIO_PortPinSettingMacro GPIO_SPI_SS2			= {GPIOB, Pin_6};	// OutThermRelayBoard
-GPIO_PortPinSettingMacro GPIO_SPI_SS3			= {GPIOB, Pin_7};	// IORelayBoard (бывшие OutHVRelayBoard-1/2)
+// RCK сдвигового регистра CS ЦАП IGBTGateDriver (аппаратный SPI1: SCK/DIN + RCK)
+GPIO_PortPinSettingMacro GPIO_SPI_SS1			= {GPIOA, Pin_15};	// RCK (latch) маски CS ЦАП
+GPIO_PortPinSettingMacro GPIO_SPI_SS2			= {GPIOB, Pin_6};	// резерв / уточнить по схеме
+GPIO_PortPinSettingMacro GPIO_SPI_SS3			= {GPIOB, Pin_7};	// резерв / уточнить по схеме
 //
 // Управление аппаратным контуром безопасности
 GPIO_PortPinSettingMacro GPIO_SFT_ENABLE		= {GPIOB, Pin_5};	// OpenDrain, связан напрямую с OE сдвиговых регистров
