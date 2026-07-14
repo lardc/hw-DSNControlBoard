@@ -7,12 +7,7 @@
 
 // Functions
 //
-void DBACT_ToggleFPLed();
-void DBACT_WriteSPI();
-void DBACT_SelfTestMeasure();
-void DBACT_SDEN();
-void DBACT_SftEnablePulse();
-void DBACT_ReadSftIn();
-void DBACT_SpiSSPulse();
+bool DBACT_HandleDiagnosticAction(uint16_t ActionID, uint16_t *pUserError);
+
 
 #endif //__DEBUGACTIONS_H

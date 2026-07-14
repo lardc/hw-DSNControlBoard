@@ -9,7 +9,6 @@
 #include "LowLevel.h"
 #include "SysConfig.h"
 #include "DebugActions.h"
-#include "Diagnostic.h"
 #include "BCCIxParams.h"
 #include "CommutationTable.h"
 #include "ZcRegistersDriver.h"
@@ -272,7 +271,7 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 			break;
 
 		default:
-			return DIAG_HandleDiagnosticAction(ActionID, pUserError);
+			return DBACT_HandleDiagnosticAction(ActionID, pUserError);
 	}
 	return true;
 }
