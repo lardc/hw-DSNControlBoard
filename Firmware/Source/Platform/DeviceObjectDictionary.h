@@ -28,28 +28,26 @@
 
 // Сохраняемые регистры
 //
-
-#define REG_SAFETY_DELAY						1	// Задержка отключения коммутации, мс
 #define REG_SAFETY_ACTIVE						2	// Активация системы безопасности
 #define REG_DPN_CAN_ID							3	// DPN CAN ID
 #define REG_DPN_EMULATED						4	// DPN emulation
 //
-#define REG_DEV_STATE							96	// Регистр состояния
-#define REG_FAULT_REASON						97	// Регистр Fault
-#define REG_DISABLE_REASON						98	// Регистр Disable
-#define REG_WARNING								99	// Регистр Warning
-#define REG_PROBLEM								100	// Регистр Problem
-#define REG_OP_RESULT							101	// Регистр результата операции
-#define REG_SELF_TEST_OP_RESULT					102	// Регистр результата самотестирования
-#define REG_SUB_STATE							103	// Регистр вспомогательного состояния
-
 #define REG_CNT_NUMBER							104	// Номер счетчика, в который будет записано значение из регистра 105
 #define REG_CNT_VALUE							105	// Значение, которое будет записано в счетчик
 
 // Несохраняемые регистры чтения-записи
 //
 #define REG_DBG									150	// Отладочный регистр
+// Регистры только чтение
 //
+#define REG_DEV_STATE							192	// Регистр состояния
+#define REG_FAULT_REASON						193	// Регистр Fault
+#define REG_DISABLE_REASON						194	// Регистр Disable
+#define REG_WARNING								195	// Регистр Warning
+#define REG_PROBLEM								196	// Регистр Problem
+#define REG_OP_RESULT							197	// Регистр результата операции
+#define REG_SELF_TEST_OP_RESULT					198	// Регистр результата самотестирования
+#define REG_SUB_STATE							199	// Регистр вспомогательного состояния
 
 #define REG_EXT_UNIT_ERROR_CODE					220	// Ошибка интерфейса CAN: код ошибки
 #define REG_EXT_UNIT_FUNCTION					221	// Ошибка интерфейса CAN: код функции

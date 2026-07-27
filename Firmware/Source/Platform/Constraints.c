@@ -8,12 +8,12 @@
 // Constants
 //
 const TableItemConstraint Constraint[DATA_TABLE_WP_START] = {
-		{SFTST_ALLOWED_VOLTAGE_MIN, SFTST_ALLOWED_VOLTAGE_MAX, SFTST_ALLOWED_VOLTAGE_DEF1},	// 0
-		{SFTY_DELAY_MIN, SFTY_DELAY_MAX, SFTY_DELAY_DEF},							// 1
+		{0, 0, 0},																	// 0
+		{0, 0, 0},																	// 1
 		{NO, YES, YES},																// 2
 		{0, INT16U_MAX, DPN_CAN_ID_DEF},											// 3
 		{NO, YES, NO},																// 4
-		{SFTST_ALLOWED_VOLTAGE_MIN, SFTST_ALLOWED_VOLTAGE_MAX, SFTST_ALLOWED_VOLTAGE_DEF2},	// 5
+		{0, 0, 0},																	// 5
 		{0, 0, 0},																	// 6
 		{0, 0, 0},																	// 7
 		{0, 0, 0},																	// 8
@@ -78,20 +78,20 @@ const TableItemConstraint Constraint[DATA_TABLE_WP_START] = {
 		{0, 0, 0},																	// 67
 		{0, 0, 0},																	// 68
 		{0, 0, 0},																	// 69
-		{0, INT16U_MAX, 0},															// 70
-		{DUT_POSITION_1, DUT_POSITION_2, DUT_POSITION_1},							// 71
-		{0, INT16U_MAX, 0},															// 72
-		{0, INT16U_MAX, 0},															// 73
+		{0, 0, 0},																	// 70
+		{0, 0, 0},																	// 71
+		{0, 0, 0},																	// 72
+		{0, 0, 0},																	// 73
 		{0, 0, 0},																	// 74
 		{0, 0, 0},																	// 75
 		{0, 0, 0},																	// 76
 		{0, 0, 0},																	// 77
 		{0, 0, 0},																	// 78
 		{0, 0, 0},																	// 79
-		{NO, YES, NO},																// 80
-		{NO, YES, NO},																// 81
-		{NO, YES, NO},																// 82
-		{NO, YES, NO},																// 83
+		{0, 0, 0},																	// 80
+		{0, 0, 0},																	// 81
+		{0, 0, 0},																	// 82
+		{0, 0, 0},																	// 83
 		{0, 0, 0},																	// 84
 		{0, 0, 0},																	// 85
 		{0, 0, 0},																	// 86
@@ -159,11 +159,11 @@ const TableItemConstraint Constraint[DATA_TABLE_WP_START] = {
 		{0, 0, 0},																	// 148
 		{0, 0, 0},																	// 149
 		{0, INT16U_MAX, 0},															// 150
-		{0, INT16U_MAX, 0},															// 151
-		{0, INT16U_MAX, 0},															// 152
-		{0, INT16U_MAX, 0},															// 153
-		{0, INT16U_MAX, 0},															// 154
-		{0, INT16U_MAX, 0},															// 155
+		{0, 0, 0},																	// 151
+		{0, 0, 0},																	// 152
+		{0, 0, 0},																	// 153
+		{0, 0, 0},																	// 154
+		{0, 0, 0},																	// 155
 		{0, 0, 0},																	// 156
 		{0, 0, 0},																	// 157
 		{0, 0, 0},																	// 158
