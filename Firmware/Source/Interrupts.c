@@ -8,15 +8,16 @@
 #include "Global.h"
 #include "DataTable.h"
 #include "DeviceObjectDictionary.h"
+#include "ZwUSART.h"
 
 // Functions
 //
-void USART1_IRQHandler()
+void USART3_IRQHandler()
 {
-	if(ZwSCI_RecieveCheck(USART1))
+	if(USARTx_RecieveCheck(USART3))
 	{
-		ZwSCI_RegisterToFIFO(USART1);
-		ZwSCI_RecieveFlagClear(USART1);
+		USARTx_RegisterToFIFO(USART3);
+		USARTx_OverrunFlagClear(USART3);
 	}
 }
 //-----------------------------------------

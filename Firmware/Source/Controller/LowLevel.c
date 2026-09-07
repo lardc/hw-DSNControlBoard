@@ -28,14 +28,17 @@ void LL_ToggleFPLed()
 
 void LL_SPI_WriteByte(Int8U Data)
 {
-	SPI_WriteByte8b(SPI1, Data);
+	SPI_WriteByte8b(SPI3, Data);
 }
 //-----------------------------
 
-
 void LL_Safety(bool Enable)
 {
-	GPIO_SetState(GPIO_SFT_ENABLE, Enable);
+	if(Enable)
+	{
+		GPIO_SetState(GPIO_GATE_CTRL_H, false);
+		GPIO_SetState(GPIO_GATE_CTRL_L, false);
+	}
 }
 //-----------------------------
 

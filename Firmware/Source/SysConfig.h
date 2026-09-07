@@ -21,20 +21,21 @@
 // ----------------------------------------------
 
 // Timers
-#define TIMER7_uS						1000		// в мкс
+#define TIMER7_uS						1000		// мкс
+#define TIMER2_TICK_HZ					1000000		//
 // ----------------------------------------------
 
 // CAN
 #define CAN_BAUDRATE					1000000		// Битрейт CAN
 // ----------------------------------------------
 
-// ADC
-
+// ADC2: диагностика силовых линий (PB2 = ADC2_IN12)
+#define ADC_DIAG_CHANNEL				12
 // ----------------------------------------------
 
-// SPI
-#define SPI1_BAUDRATE_BITS				0x7			// Биты задания битрейта SPI
-#define SPI1_LSB_FIRST					false		// Передача младшим битов вперед
+// SPI3: SR и ЦАП IGBTGateDriver, ~1 МГц, MSB first, rising edge
+#define SPI3_BAUDRATE_BITS				0x4			// APB1≈35 МГц / 32 ≈ 1.1 МГц
+#define SPI3_LSB_FIRST					false
 // ----------------------------------------------
 
 #endif // __SYSCONFIG_H

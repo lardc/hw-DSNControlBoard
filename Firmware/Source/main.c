@@ -17,11 +17,13 @@ int main()
 	// Настройка CAN (BCCI)
 	INITCFG_ConfigCAN();
 
-	// Настройка UART
+	// Настройка UART3
 	INITCFG_ConfigUART();
 	
 	// Настройка системного счетчика
 	INITCFG_ConfigTimer7();
+
+	INITCFG_ConfigTimer2();
 
 	// Настройка сторожевого таймера
 	INITCFG_ConfigWatchDog();
@@ -29,7 +31,7 @@ int main()
 	// Настройка АЦП
 	INITCFG_ConfigADC();
 
-	// Настройка аппаратного SPI1
+	// Настройка аппаратного SPI3 
 	INITCFG_ConfigSPI();
 
 	// Инициализация логики контроллера
