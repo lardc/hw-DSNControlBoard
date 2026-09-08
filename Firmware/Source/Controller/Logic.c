@@ -5,6 +5,7 @@
 #include "DS2431.h"
 #include "DS18B20.h"
 #include "OneWire.h"
+#include "DPN.h"
 
 // Variables
 //
@@ -97,7 +98,8 @@ static Boolean LOGIC_CheckTemperaturePresent()
 
 void LOGIC_Process()
 {
-	// Cooling / config / pulse FSM — этапы 6–7
+	DPN_Process();
+	// Cooling / config / pulse FSM — этап 7
 }
 //-----------------------------------------------
 

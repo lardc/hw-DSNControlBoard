@@ -12,6 +12,7 @@
 #include "BCCIxParams.h"
 #include "ZcRegistersDriver.h"
 #include "DPN.h"
+#include "Logic.h"
 #include "BCCIMHighLevel.h"
 #include "SaveToFlash.h"
 #include "DeviceObjectDictionary.h"
@@ -61,12 +62,16 @@ void CONTROL_Init()
 	// Сброс значений
 	DEVPROFILE_ResetControlSection();
 	CONTROL_ResetToDefaultState();
+
+	// Принудительная остановка DPN при старте
+	DPN_RequestStop();
 }
 //------------------------------------------
 
 void CONTROL_Idle()
 {
 	CONTROL_SafetyCheck();
+	LOGIC_Process();
 
 	DEVPROFILE_ProcessRequests();
 	CONTROL_UpdateWatchDog();
@@ -83,6 +88,7 @@ void CONTROL_SwitchToFault(Int16U Reason)
 		DataTable[REG_EXT_UNIT_EXT_DATA] = Error.ExtData;
 	}
 
+	DPN_ResetFsm();
 	CONTROL_ResetOutputRegisters();
 
 	CONTROL_SetDeviceState(DS_Fault);
@@ -117,7 +123,9 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 		case ACT_ENABLE_POWER:
 			if(CONTROL_State == DS_None)
 			{
-				if(DPN_Enable())
+				if(DPN_IsBusy())
+					*pUserError = ERR_DEVICE_NOT_READY;
+				else if(DPN_Enable())
 					CONTROL_SetDeviceState(DS_Enabled);
 			}
 			else if(CONTROL_State != DS_Enabled)
@@ -127,7 +135,9 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 		case ACT_DISABLE_POWER:
 			if(CONTROL_State == DS_Enabled)
 			{
-				if(DPN_Disable())
+				if(DPN_IsBusy())
+					*pUserError = ERR_DEVICE_NOT_READY;
+				else if(DPN_RequestStop())
 					CONTROL_SetDeviceState(DS_None);
 			}
 			else if(CONTROL_State != DS_None)
@@ -137,7 +147,9 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 		case ACT_CLR_FAULT:
 			if (CONTROL_State == DS_Fault)
 			{
-				if(DPN_ClearFault() && DPN_Disable())
+				if(DPN_IsBusy())
+					*pUserError = ERR_DEVICE_NOT_READY;
+				else if(DPN_ClearFault() && DPN_RequestStop())
 				{
 					CONTROL_SetDeviceState(DS_None);
 					DataTable[REG_FAULT_REASON] = DF_NONE;

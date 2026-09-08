@@ -100,6 +100,29 @@
 #define REG_FWINFO_STR_BEGIN					261	// Beginning of the information string record
 #define REG_MEM_SYMBOL							299	// Считанный по адресу памяти символ
 
+// DPN actions (коды команд на стороне DPNControlBoard)
+#define ACT_DPN_ENABLE_POWER					1	// Включение блока DPN
+#define ACT_DPN_DISABLE_POWER					2	// Выключение / принудительная остановка DPN
+#define ACT_DPN_CLR_FAULT						3	// Очистка fault DPN
+#define ACT_DPN_CLR_WARNING						4	// Очистка warning DPN
+#define ACT_DPN_CONFIG							100	// Конфигурация узла по заданным параметрам
+#define ACT_DPN_SAFETY_TRIG_CLEAR				101	// Сброс состояния SafetyTrig
+#define ACT_DPN_SELF_TEST						110	// Запуск самотестирования DPN
+
+// DPN registers (номера регистров на стороне DPN)
+#define REG_DPN_VOLTAGE							128	// Напряжение испытания, В
+#define REG_DPN_DUT_POSITION					129	// Позиция DUT
+#define REG_DPN_CURRENT							130	// Ток испытания, А
+#define REG_DPN_MAX_DURATION					131	// Максимальное время измерения, мкс
+#define REG_DPN_DEV_STATE						192	// Регистр состояния
+#define REG_DPN_FAULT_REASON					193	// Регистр Fault
+#define REG_DPN_DISABLE_REASON					194	// Регистр Disable
+#define REG_DPN_WARNING							195	// Регистр Warning
+#define REG_DPN_PROBLEM							196	// Регистр Problem
+#define REG_DPN_OP_RESULT						197	// Регистр результата операции
+#define REG_DPN_INDUCTANCE						203	// Выбранная индуктивность
+#define REG_DPN_MEASURE_DURATION				204	// Расчётное время измерения, мкс
+
 // Operation results
 #define OPRESULT_NONE							0	// Нет информации / не завершено
 #define OPRESULT_OK								1	// Операция успешна
@@ -137,28 +160,5 @@
 
 // Endpoints
 #define EP_DiagData								20	// Диагностические данные из flash
-
-// DPN actions (коды команд на стороне DPNControlBoard)
-#define ACT_DPN_ENABLE_POWER					1	// Включение блока DPN
-#define ACT_DPN_DISABLE_POWER					2	// Выключение / принудительная остановка DPN
-#define ACT_DPN_CLR_FAULT						3	// Очистка fault DPN
-#define ACT_DPN_CLR_WARNING						4	// Очистка warning DPN
-#define ACT_DPN_CONFIG							100	// Конфигурация узла по заданным параметрам
-#define ACT_DPN_SAFETY_TRIG_CLEAR				101	// Сброс состояния SafetyTrig
-#define ACT_DPN_SELF_TEST						110	// Запуск самотестирования DPN
-
-// DPN registers (номера регистров на стороне DPN)
-#define REG_DPN_VOLTAGE							128	// Напряжение испытания, В 
-#define REG_DPN_DUT_POSITION					129	// Позиция DUT 
-#define REG_DPN_CURRENT							130	// Ток испытания, А 
-#define REG_DPN_MAX_DURATION					131	// Максимальное время измерения, мкс 
-#define REG_DPN_DEV_STATE						192	// Регистр состояния
-#define REG_DPN_FAULT_REASON					193	// Регистр Fault
-#define REG_DPN_DISABLE_REASON					194	// Регистр Disable
-#define REG_DPN_WARNING							195	// Регистр Warning
-#define REG_DPN_PROBLEM							196	// Регистр Problem
-#define REG_DPN_OP_RESULT						197	// Регистр результата операции
-#define REG_DPN_INDUCTANCE						203	// Выбранная индуктивность 
-#define REG_DPN_MEASURE_DURATION				204	// Расчётное время измерения, мкс 
 
 #endif //  __DEV_OBJ_DIC_H
