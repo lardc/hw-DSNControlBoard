@@ -34,7 +34,6 @@ typedef struct __LogicAdapterState
 
 extern LogicAdapterState LOGIC_Adapter;
 
-// Фоновый цикл (FSM — следующие этапы)
 void LOGIC_Process();
 
 // Поиск DS2431 + разбор MemLabel + наличие DS18B20
@@ -45,5 +44,15 @@ Boolean LOGIC_RefreshAdapter();
 
 Boolean LOGIC_IsAdapterReady();
 Boolean LOGIC_ReadTemperature(pFloat32 Temperature);
+
+// Старт операций (из Dispatch)
+Boolean LOGIC_Configure();
+Boolean LOGIC_StartPulse();
+void LOGIC_StopProcess();
+void LOGIC_Deactivate();
+void LOGIC_Reset();
+
+Boolean LOGIC_IsConfigured();
+Boolean LOGIC_IsBusy();
 
 #endif // __LOGIC_H

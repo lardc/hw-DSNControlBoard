@@ -141,8 +141,8 @@ const TableItemConstraint Constraint[DATA_TABLE_WP_START] = {
 		{0, REG_TEST_CURRENT_MAX, 0},												// 129
 		{TEST_POS_H, TEST_POS_L, TEST_POS_H},										// 130
 		{SCHEME_SD, SCHEME_DD, SCHEME_HB},											// 131
-		{0, REG_TEST_PULSE_US_MAX, 0},												// 132
-		{0, REG_TEST_PULSE_US_MAX, 0},												// 133
+		{0, REG_TEST_PULSE_MS_MAX, 0},												// 132
+		{0, REG_TEST_PULSE_MS_MAX, 0},												// 133
 		{-REG_GATE_V_MAX, REG_GATE_V_MAX, REG_GATE_OPEN_V_DFLT},					// 134
 		{-REG_GATE_V_MAX, REG_GATE_V_MAX, REG_GATE_CLOSE_V_DFLT},					// 135
 		{0, REG_GATE_RG_MAX, REG_GATE_RG_DFLT},										// 136

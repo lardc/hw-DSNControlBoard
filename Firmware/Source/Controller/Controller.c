@@ -89,6 +89,7 @@ void CONTROL_SwitchToFault(Int16U Reason)
 	}
 
 	DPN_ResetFsm();
+	LOGIC_Reset();
 	CONTROL_ResetOutputRegisters();
 
 	CONTROL_SetDeviceState(DS_Fault);
@@ -123,7 +124,7 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 		case ACT_ENABLE_POWER:
 			if(CONTROL_State == DS_None)
 			{
-				if(DPN_IsBusy())
+				if(DPN_IsBusy() || LOGIC_IsBusy())
 					*pUserError = ERR_DEVICE_NOT_READY;
 				else if(DPN_Enable())
 					CONTROL_SetDeviceState(DS_Enabled);
@@ -133,12 +134,15 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 			break;
 
 		case ACT_DISABLE_POWER:
-			if(CONTROL_State == DS_Enabled)
+			if(CONTROL_State == DS_Enabled || CONTROL_State == DS_SafetyActive)
 			{
-				if(DPN_IsBusy())
+				if(DPN_IsBusy() || LOGIC_IsBusy())
 					*pUserError = ERR_DEVICE_NOT_READY;
-				else if(DPN_RequestStop())
+				else
+				{
+					LOGIC_Deactivate();
 					CONTROL_SetDeviceState(DS_None);
+				}
 			}
 			else if(CONTROL_State != DS_None)
 					*pUserError = ERR_OPERATION_BLOCKED;
@@ -147,10 +151,11 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 		case ACT_CLR_FAULT:
 			if (CONTROL_State == DS_Fault)
 			{
-				if(DPN_IsBusy())
+				if(DPN_IsBusy() || LOGIC_IsBusy())
 					*pUserError = ERR_DEVICE_NOT_READY;
-				else if(DPN_ClearFault() && DPN_RequestStop())
+				else if(DPN_ClearFault())
 				{
+					LOGIC_Deactivate();
 					CONTROL_SetDeviceState(DS_None);
 					DataTable[REG_FAULT_REASON] = DF_NONE;
 				}
@@ -175,13 +180,45 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 			break;
 
 		case ACT_SET_INACTIVE:
-			if(CONTROL_State == DS_Enabled || CONTROL_State == DS_SafetyActive || CONTROL_State == DS_SafetyTrig)
+			if(CONTROL_State == DS_Enabled || CONTROL_State == DS_SafetyActive
+					|| CONTROL_State == DS_SafetyTrig || CONTROL_State == DS_InProcess)
 			{
+				LOGIC_Deactivate();
 				DPN_ClearSafetyTrig();
 				CONTROL_SetDeviceState(DS_Enabled);
 			}
 			else
 				*pUserError = ERR_DEVICE_NOT_READY;
+			break;
+
+		case ACT_CONFIGURE:
+			if(CONTROL_State == DS_SafetyActive)
+			{
+				if(!LOGIC_Configure())
+					*pUserError = ERR_DEVICE_NOT_READY;
+			}
+			else
+				*pUserError = ERR_OPERATION_BLOCKED;
+			break;
+
+		case ACT_START_PULSE:
+			if(CONTROL_State == DS_SafetyActive && LOGIC_IsConfigured())
+			{
+				if(!LOGIC_StartPulse())
+					*pUserError = ERR_DEVICE_NOT_READY;
+			}
+			else
+				*pUserError = ERR_OPERATION_BLOCKED;
+			break;
+
+		case ACT_STOP_PULSE:
+			if(CONTROL_State == DS_InProcess)
+			{
+				LOGIC_StopProcess();
+				CONTROL_SetDeviceState(DS_SafetyActive);
+			}
+			else
+				*pUserError = ERR_OPERATION_BLOCKED;
 			break;
 
 		default:

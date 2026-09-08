@@ -24,7 +24,7 @@
 //
 #define REG_TEST_VOLTAGE_MAX			1800.0f
 #define REG_TEST_CURRENT_MAX			1000.0f
-#define REG_TEST_PULSE_US_MAX			100000.0f
+#define REG_TEST_PULSE_MS_MAX			100000.0f
 #define REG_GATE_V_MAX					30.0f
 #define REG_GATE_RG_MAX					20.0f
 #define REG_GATE_OPEN_V_DFLT			15.0f
