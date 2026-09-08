@@ -24,6 +24,7 @@ void INITCFG_ConfigIO()
 	GPIO_InitPushPullOutput(GPIO_FAN);
 	GPIO_InitPushPullOutput(GPIO_SCOPE_SYNC);
 	GPIO_InitPushPullOutput(GPIO_LED);
+	GPIO_InitPushPullOutput(GPIO_FP_LED);
 	GPIO_InitPushPullOutput(GPIO_DQ_CTRL);
 
 	// Open-drain выходы (ТТ)
@@ -58,6 +59,7 @@ void INITCFG_ConfigIO()
 	GPIO_SetState(GPIO_FAN, false);
 	GPIO_SetState(GPIO_SCOPE_SYNC, false);
 	GPIO_SetState(GPIO_LED, false);
+	GPIO_SetState(GPIO_FP_LED, false);
 
 	// Альтернативные функции
 	GPIO_InitAltFunction(GPIO_ALT_UART3_TX, AltFn_7);
