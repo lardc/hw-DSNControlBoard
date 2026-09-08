@@ -39,9 +39,8 @@ GPIO_PortPinSettingMacro GPIO_RCK_L				= {GPIOB, Pin_7};	// Latch SR IGBTGateDri
 //
 GPIO_PortPinSettingMacro GPIO_FAN				= {GPIOB, Pin_12};
 GPIO_PortPinSettingMacro GPIO_SCOPE_SYNC		= {GPIOB, Pin_13};
-GPIO_PortPinSettingMacro GPIO_LED				= {GPIOB, Pin_14};	// Светодиод на плате
-// В ТТ дубль PB14 для индикатора блока; отдельного пина нет — тот же выход
-GPIO_PortPinSettingMacro GPIO_FP_LED			= {GPIOB, Pin_14};
+GPIO_PortPinSettingMacro GPIO_LED				= {GPIOB, Pin_14};
+GPIO_PortPinSettingMacro GPIO_FP_LED			= {GPIOB, Pin_15};
 
 // Аналоговый вход диагностики силовых линий
 GPIO_PortPinSettingMacro GPIO_ADC_DIAG			= {GPIOB, Pin_2};	// ADC2 IN12
