@@ -4,6 +4,7 @@
 
 // Header
 #include "Constraints.h"
+#include "IGBTGateDriver.h"
 
 // Constants
 //
@@ -17,9 +18,9 @@ const TableItemConstraint Constraint[DATA_TABLE_WP_START] = {
 		{0, REG_DRV_K_MAX, REG_DRV_K_DFLT},											// 6
 		{0, REG_DRV_K_MAX, REG_DRV_K_DFLT},											// 7
 		{0, REG_DRV_K_MAX, REG_DRV_K_DFLT},											// 8
-		{0, 0, 0},																	// 9
-		{0, 0, 0},																	// 10
-		{0, 0, 0},																	// 11
+		{REG_TEMP_COOLING_MIN, REG_TEMP_COOLING_MAX, REG_TEMP_COOLING_DFLT},		// 9
+		{0, REG_ADC_DIAG_K_MAX, REG_ADC_DIAG_K_DFLT},								// 10 
+		{REG_ADC_DIAG_OFFSET_MIN, REG_ADC_DIAG_OFFSET_MAX, 0},						// 11
 		{0, 0, 0},																	// 12
 		{0, 0, 0},																	// 13
 		{0, 0, 0},																	// 14
@@ -136,16 +137,16 @@ const TableItemConstraint Constraint[DATA_TABLE_WP_START] = {
 		{0, 0, 0},																	// 125
 		{0, 0, 0},																	// 126
 		{0, 0, 0},																	// 127
-		{0, 0, 0},																	// 128
-		{0, 0, 0},																	// 129
-		{0, 0, 0},																	// 130
-		{0, 0, 0},																	// 131
-		{0, 0, 0},																	// 132
-		{0, 0, 0},																	// 133
-		{0, 0, 0},																	// 134
-		{0, 0, 0},																	// 135
-		{0, 0, 0},																	// 136
-		{0, 0, 0},																	// 137
+		{0, REG_TEST_VOLTAGE_MAX, 0},												// 128
+		{0, REG_TEST_CURRENT_MAX, 0},												// 129
+		{TEST_POS_H, TEST_POS_L, TEST_POS_H},										// 130
+		{SCHEME_SD, SCHEME_DD, SCHEME_HB},											// 131
+		{0, REG_TEST_PULSE_US_MAX, 0},												// 132
+		{0, REG_TEST_PULSE_US_MAX, 0},												// 133
+		{-REG_GATE_V_MAX, REG_GATE_V_MAX, REG_GATE_OPEN_V_DFLT},					// 134
+		{-REG_GATE_V_MAX, REG_GATE_V_MAX, REG_GATE_CLOSE_V_DFLT},					// 135
+		{0, REG_GATE_RG_MAX, REG_GATE_RG_DFLT},										// 136
+		{0, REG_GATE_RG_MAX, REG_GATE_RG_DFLT},										// 137
 		{0, 0, 0},																	// 138
 		{0, 0, 0},																	// 139
 		{0, 0, 0},																	// 140

@@ -13,6 +13,16 @@ typedef ZcRD_DriverChannel IGBTGD_Channel;
 #define IGBTGD_CH_H		ZcRD_DrvH
 #define IGBTGD_CH_L		ZcRD_DrvL
 
+// Коды схемы включения
+#define SCHEME_SD								17	// Single diode
+#define SCHEME_HB								18	// Half-bridge
+#define SCHEME_LC								19	// Low chopper
+#define SCHEME_HC								20	// High chopper
+#define SCHEME_DD								21	// Dual diode
+
+#define TEST_POS_H								0	// Верхний ключ (H)
+#define TEST_POS_L								1	// Нижний ключ (L)
+
 // Подбор кода Rg (битмаска BIT0..7) по целевому сопротивлению, Ом
 Int8U IGBTGD_FindRgCode(float RgOhm);
 

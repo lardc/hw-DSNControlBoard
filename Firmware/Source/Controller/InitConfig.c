@@ -41,6 +41,7 @@ void INITCFG_ConfigIO()
 	GPIO_InitOpenDrainOutput(GPIO_RCK_L, NoPull);
 
 	// Входы
+	GPIO_InitInput(GPIO_SFT_IN, NoPull);
 	GPIO_InitInput(GPIO_DQ_IN, NoPull);
 
 	// Аналог диагностики

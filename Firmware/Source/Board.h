@@ -17,9 +17,7 @@
 #include "ZwSPI.h"
 
 //
-// PA1: в ТТ указан и как вход safety, и как TIM2_CH2 (SelfTestResult).
-// Принято: AF TIM2_CH2; уровень safety читается с того же пина (IDR) до/вне capture.
-GPIO_PortPinSettingMacro GPIO_SFT_IN			= {GPIOA, Pin_1};
+GPIO_PortPinSettingMacro GPIO_SFT_IN			= {GPIOA, Pin_0};	// Вход безопасности (в ТТ опечатка PA1)
 GPIO_PortPinSettingMacro GPIO_SFT_IGNORE		= {GPIOA, Pin_2};
 GPIO_PortPinSettingMacro GPIO_ST_DISCHARGE		= {GPIOA, Pin_3};
 GPIO_PortPinSettingMacro GPIO_ST_START			= {GPIOA, Pin_4};
@@ -52,6 +50,6 @@ GPIO_PortPinSettingMacro GPIO_ALT_CAN1_RX		= {GPIOB, Pin_8};
 GPIO_PortPinSettingMacro GPIO_ALT_CAN1_TX		= {GPIOB, Pin_9};
 GPIO_PortPinSettingMacro GPIO_ALT_SPI3_SCK		= {GPIOB, Pin_3};
 GPIO_PortPinSettingMacro GPIO_ALT_SPI3_MOSI		= {GPIOB, Pin_5};
-GPIO_PortPinSettingMacro GPIO_ALT_TIM2_CH2		= {GPIOA, Pin_1};
+GPIO_PortPinSettingMacro GPIO_ALT_TIM2_CH2		= {GPIOA, Pin_1};	// SelfTestResult capture
 
 #endif // __BOARD_H
