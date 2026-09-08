@@ -7,6 +7,10 @@
 #define ACT_CLR_FAULT							3	// Очистка всех fault
 #define ACT_CLR_WARNING							4	// Очистка всех warning
 
+#define ACT_DBG_ONEWIRE_DISCOVER				125	// Поиск меток/DS18B20; REG_DBG: T + SW*10 + GD*100 + Probe*1000
+#define ACT_DBG_READ_TEMP						126	// Температура адаптера °C → REG_DBG
+#define ACT_DBG_ADAPTER_LIMITS					127	// MaxVoltage*1000 + MaxCurrent → REG_DBG (после Discover)
+
 #define ACT_SET_ACTIVE							100	// Команда активации контура безопасности
 #define ACT_SET_INACTIVE						101	// Команда деактивации контура безопасности
 
@@ -82,6 +86,9 @@
 #define PROBLEM_NONE							0
 #define PROBLEM_DPN_NOT_READY					2	// DPN не готов
 #define PROBLEM_DPN_FAILED_COMMAND				4	// OPResult DPN выставился fail без фолта
+#define PROBLEM_OW_BUS							10	// Ошибка шины 1-Wire / поиск
+#define PROBLEM_OW_INVENTORY					11	// Неполный набор меток адаптера
+#define PROBLEM_OW_TEMP							12	// DS18B20 недоступен
 
 //  Warning
 #define WARNING_NONE							0

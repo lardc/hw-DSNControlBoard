@@ -3,6 +3,9 @@
 #include "SysConfig.h"
 #include "BCCIxParams.h"
 #include "ZwUSART.h"
+#include "OneWire.h"
+#include "DS18B20.h"
+#include "DS2431.h"
 
 // Functions
 //
@@ -47,13 +50,13 @@ void INITCFG_ConfigIO()
 	GPIO_SetState(GPIO_SFT_IGNORE, false);
 	GPIO_SetState(GPIO_ST_DISCHARGE, false);
 	GPIO_SetState(GPIO_ST_START, false);
-	GPIO_SetState(GPIO_DQ_PWR, true);			// OD: 1 = high-Z / форс. питание по схеме
+	GPIO_SetState(GPIO_DQ_PWR, true);
 	GPIO_SetState(GPIO_DQ_CTRL, false);
 	GPIO_SetState(GPIO_RCK_EXP, false);
-	GPIO_SetState(GPIO_OE_EXP, true);			// инвертированный OE: 1 = выходы запрещены
+	GPIO_SetState(GPIO_OE_EXP, true);
 	GPIO_SetState(GPIO_GATE_CTRL_H, false);
 	GPIO_SetState(GPIO_GATE_CTRL_L, false);
-	GPIO_SetState(GPIO_SPI_SCK_MUX, true);		// 1: линия SCK_DAC (безопасный idle до записи в SR)
+	GPIO_SetState(GPIO_SPI_SCK_MUX, true);
 	GPIO_SetState(GPIO_RCK_H, false);
 	GPIO_SetState(GPIO_RCK_L, false);
 	GPIO_SetState(GPIO_FAN, false);
@@ -68,7 +71,6 @@ void INITCFG_ConfigIO()
 	GPIO_InitAltFunction(GPIO_ALT_CAN1_TX, AltFn_9);
 	GPIO_InitAltFunction(GPIO_ALT_SPI3_SCK, AltFn_6);
 	GPIO_InitAltFunction(GPIO_ALT_SPI3_MOSI, AltFn_6);
-	// PA1: TIM2_CH2 (SelfTestResult / safety IDR)
 	GPIO_InitAltFunction(GPIO_ALT_TIM2_CH2, AltFn_1);
 }
 //------------------------------------------------
@@ -100,8 +102,6 @@ void INITCFG_ConfigTimer7()
 
 void INITCFG_ConfigTimer2()
 {
-	// Свободный счётчик 1 МГц + input capture CH2 (PA1) для SelfTestResult.
-	// Старт/стоп измерения и расчёт длительности — этап 2 (LowLevel).
 	TIM_Clock_En(TIM_2);
 
 	TIM2->PSC = (uint32_t)(SYSCLK / TIMER2_TICK_HZ) - 1;
@@ -110,7 +110,7 @@ void INITCFG_ConfigTimer2()
 	TIM2->SR = 0;
 
 	TIM2->CCMR1 &= ~(TIM_CCMR1_CC2S | TIM_CCMR1_IC2F);
-	TIM2->CCMR1 |= TIM_CCMR1_CC2S_0;	// IC2 → TI2
+	TIM2->CCMR1 |= TIM_CCMR1_CC2S_0;
 	TIM2->CCER &= ~(TIM_CCER_CC2P | TIM_CCER_CC2NP);
 	TIM2->CCER |= TIM_CCER_CC2E;
 
@@ -138,5 +138,23 @@ void INITCFG_ConfigADC()
 void INITCFG_ConfigSPI()
 {
 	SPI_Init8b(SPI3, SPI3_BAUDRATE_BITS, SPI3_LSB_FIRST);
+}
+//-----------------------------------------------
+
+void INITCFG_ConfigOneWire()
+{
+	OneWireBus Config;
+
+	Config.writePin = GPIO_DQ_CTRL;
+	Config.readPin = GPIO_DQ_IN;
+	Config.powerPin = GPIO_DQ_PWR;
+	Config.useSinglePin = false;
+	Config.hasPowerPin = true;
+	Config.invertWrite = true;
+	Config.invertPower = true;
+	OneWire_Init(Config);
+
+	DS18B20_Init(Config.hasPowerPin);
+	DS2431_Init();
 }
 //-----------------------------------------------

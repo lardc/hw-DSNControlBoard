@@ -34,6 +34,9 @@ int main()
 	// Настройка аппаратного SPI3 
 	INITCFG_ConfigSPI();
 
+	// Шина 1-Wire 
+	INITCFG_ConfigOneWire();
+
 	// Инициализация логики контроллера
 	CONTROL_Init();
 
