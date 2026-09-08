@@ -9,6 +9,8 @@
 //Definitions
 //
 #define DPN_CAN_ID_DEF					100
+#define REG_DRV_K_DFLT					1.0f
+#define REG_DRV_K_MAX					10.0f
 //
 #define NO								false
 #define YES								true

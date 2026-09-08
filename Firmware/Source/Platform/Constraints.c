@@ -13,10 +13,10 @@ const TableItemConstraint Constraint[DATA_TABLE_WP_START] = {
 		{NO, YES, YES},																// 2
 		{0, INT16U_MAX, DPN_CAN_ID_DEF},											// 3
 		{NO, YES, NO},																// 4
-		{0, 0, 0},																	// 5
-		{0, 0, 0},																	// 6
-		{0, 0, 0},																	// 7
-		{0, 0, 0},																	// 8
+		{0, REG_DRV_K_MAX, REG_DRV_K_DFLT},											// 5
+		{0, REG_DRV_K_MAX, REG_DRV_K_DFLT},											// 6
+		{0, REG_DRV_K_MAX, REG_DRV_K_DFLT},											// 7
+		{0, REG_DRV_K_MAX, REG_DRV_K_DFLT},											// 8
 		{0, 0, 0},																	// 9
 		{0, 0, 0},																	// 10
 		{0, 0, 0},																	// 11

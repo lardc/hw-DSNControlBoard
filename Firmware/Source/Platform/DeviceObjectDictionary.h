@@ -31,6 +31,10 @@
 #define REG_SAFETY_ACTIVE						2	// Активация системы безопасности
 #define REG_DPN_CAN_ID							3	// DPN CAN ID
 #define REG_DPN_EMULATED						4	// DPN emulation
+#define REG_DRVH_OPEN_K							5	// К отпирающего ЦАП IGBTGateDriverH
+#define REG_DRVH_CLOSE_K						6	// К запирающего ЦАП IGBTGateDriverH
+#define REG_DRVL_OPEN_K							7	// К отпирающего ЦАП IGBTGateDriverL
+#define REG_DRVL_CLOSE_K						8	// К запирающего ЦАП IGBTGateDriverL
 //
 #define REG_CNT_NUMBER							104	// Номер счетчика, в который будет записано значение из регистра 105
 #define REG_CNT_VALUE							105	// Значение, которое будет записано в счетчик
