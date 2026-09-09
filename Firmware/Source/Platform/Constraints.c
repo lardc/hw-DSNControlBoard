@@ -23,18 +23,18 @@ const TableItemConstraint Constraint[DATA_TABLE_WP_START] = {
 		{ADC_DIAG_OFFSET_MIN, ADC_DIAG_OFFSET_MAX, 0},								// 11
 		{-ST_OPEN_V_MAX, ST_OPEN_V_MAX, ST_OPEN_V_DEF},								// 12 
 		{-ST_OPEN_V_MAX, ST_OPEN_V_MAX, ST_CLOSE_V_DEF},							// 13
-		{0, ST_DURATION_MAX, ST_CHARGE_TIME_DEF},									// 14
-		{0, ST_DURATION_MAX, ST_CAPTURE_TIMEOUT_DEF},								// 15
-		{0, ST_DURATION_MAX, ST_PULSE_MAX_DURATION_DEF},							// 16
-		{0, ST_DURATION_MAX, ST_RG_DURATION_TOL_DEF},								// 17
-		{0, ST_DURATION_MAX, ST_RG_0_DURATION_DEF},									// 18
-		{0, ST_DURATION_MAX, ST_RG_1_DURATION_DEF},									// 19
-		{0, ST_DURATION_MAX, ST_RG_2_DURATION_DEF},									// 20
-		{0, ST_DURATION_MAX, ST_RG_3_DURATION_DEF},									// 21
-		{0, ST_DURATION_MAX, ST_RG_4_DURATION_DEF},									// 22
-		{0, ST_DURATION_MAX, ST_RG_5_DURATION_DEF},									// 23
-		{0, ST_DURATION_MAX, ST_RG_6_DURATION_DEF},									// 24
-		{0, ST_DURATION_MAX, ST_RG_7_DURATION_DEF},									// 25
+		{0, INT16U_MAX, ST_CHARGE_TIME_DEF},										// 14
+		{0, INT16U_MAX, ST_CAPTURE_TIMEOUT_DEF},									// 15
+		{0, INT16U_MAX, ST_PULSE_MAX_DURATION_DEF},									// 16
+		{0, INT16U_MAX, ST_RG_DURATION_TOL_DEF},									// 17
+		{0, INT16U_MAX, ST_RG_0_DURATION_DEF},										// 18
+		{0, INT16U_MAX, ST_RG_1_DURATION_DEF},										// 19
+		{0, INT16U_MAX, ST_RG_2_DURATION_DEF},										// 20
+		{0, INT16U_MAX, ST_RG_3_DURATION_DEF},										// 21
+		{0, INT16U_MAX, ST_RG_4_DURATION_DEF},										// 22
+		{0, INT16U_MAX, ST_RG_5_DURATION_DEF},										// 23
+		{0, INT16U_MAX, ST_RG_6_DURATION_DEF},										// 24
+		{0, INT16U_MAX, ST_RG_7_DURATION_DEF},										// 25
 		{0, 0, 0},																	// 26
 		{0, 0, 0},																	// 27
 		{0, 0, 0},																	// 28

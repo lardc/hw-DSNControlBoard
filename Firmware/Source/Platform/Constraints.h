@@ -47,7 +47,6 @@
 #define ST_RG_6_DURATION_DEF			500.0f			// мкс
 #define ST_RG_7_DURATION_DEF			500.0f			// мкс
 #define ST_OPEN_V_MAX					30.0f			// В
-#define ST_DURATION_MAX					100000.0f		// мкс / мс (общая верхняя граница stub)
 //
 #define NO								false
 #define YES								true

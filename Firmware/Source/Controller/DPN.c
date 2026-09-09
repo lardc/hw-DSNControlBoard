@@ -15,17 +15,13 @@ DPNSubState DPN_SubState = DPNS_Idle;
 static DPN_FsmResult FsmResult = DPN_FR_None;
 static Int64U WaitDeadline = 0;
 static Int64U NextPollTime = 0;
+static Boolean SawBusy = false;
 
 // Function prototypes
 //
 bool DPN_CallAction(Int16U Action);
-static void DPN_FsmFailInterface();
-static void DPN_FsmFailDevice();
-static void DPN_FsmFailTimeout();
-static void DPN_FsmFailProblem();
-static void DPN_FsmSucceed();
 static Boolean DPN_FsmStart(DPNSubState FirstState);
-static Boolean DPN_PollReadyAfterCommand(Boolean *OutReady);
+static Boolean DPN_PollReadyAfterCommand(Boolean *OutReady, Boolean RequireSawBusy);
 
 // Functions
 //
@@ -221,9 +217,11 @@ bool DPN_ReadRegisterFloat(Int16U RegAddress, float* RegData)
 void DPN_ResetFsm()
 {
 	DPN_SubState = DPNS_Idle;
+	// Нет завершённого результата (не Ok/Fail) — после abort/fault/reset
 	FsmResult = DPN_FR_None;
 	WaitDeadline = 0;
 	NextPollTime = 0;
+	SawBusy = false;
 }
 //--------------------------------------
 
@@ -242,6 +240,7 @@ static Boolean DPN_FsmStart(DPNSubState FirstState)
 	DPN_SubState = FirstState;
 	WaitDeadline = 0;
 	NextPollTime = 0;
+	SawBusy = false;
 	return true;
 }
 //--------------------------------------
@@ -258,42 +257,7 @@ Boolean DPN_RequestStop()
 }
 //--------------------------------------
 
-static void DPN_FsmSucceed()
-{
-	DPN_SubState = DPNS_Idle;
-	FsmResult = DPN_FR_Ok;
-}
-//--------------------------------------
-
-static void DPN_FsmFailInterface()
-{
-	CONTROL_SwitchToFault(DF_DPN_INTERFACE);
-	FsmResult = DPN_FR_Fail;
-}
-//--------------------------------------
-
-static void DPN_FsmFailDevice()
-{
-	CONTROL_SwitchToFault(DF_DPN);
-	FsmResult = DPN_FR_Fail;
-}
-//--------------------------------------
-
-static void DPN_FsmFailTimeout()
-{
-	CONTROL_SwitchToFault(DF_DPN_FAILED_TO_FINISH);
-	FsmResult = DPN_FR_Fail;
-}
-//--------------------------------------
-
-static void DPN_FsmFailProblem()
-{
-	DPN_SubState = DPNS_Idle;
-	FsmResult = DPN_FR_Fail;
-}
-//--------------------------------------
-
-static Boolean DPN_PollReadyAfterCommand(Boolean *OutReady)
+static Boolean DPN_PollReadyAfterCommand(Boolean *OutReady, Boolean RequireSawBusy)
 {
 	Int16U DPN_State = 0;
 
@@ -312,17 +276,30 @@ static Boolean DPN_PollReadyAfterCommand(Boolean *OutReady)
 
 	if(!BHL_ReadRegister(DataTable[REG_DPN_CAN_ID], REG_DPN_DEV_STATE, &DPN_State))
 	{
-		DPN_FsmFailInterface();
+		CONTROL_SwitchToFault(DF_DPN_INTERFACE);
+		FsmResult = DPN_FR_Fail;
 		return false;
 	}
 
 	if(DPN_State == DPN_Fault)
 	{
-		DPN_FsmFailDevice();
+		CONTROL_SwitchToFault(DF_DPN);
+		FsmResult = DPN_FR_Fail;
 		return false;
 	}
 
-	if(DPN_State == DPN_Ready || DPN_State == DPN_Disabled)
+	if(DPN_State == DPN_InProcess || DPN_State == DPN_InSelfTest)
+	{
+		SawBusy = true;
+		return true;
+	}
+
+	if(RequireSawBusy)
+	{
+		if(SawBusy && DPN_State == DPN_Ready)
+			*OutReady = true;
+	}
+	else if(DPN_State == DPN_None || DPN_State == DPN_Disabled)
 		*OutReady = true;
 
 	return true;
@@ -391,8 +368,9 @@ void DPN_Process()
 		case DPNS_CfgCall:
 			if(DPN_Config())
 			{
+				SawBusy = false;
 				WaitDeadline = CONTROL_TimeCounter + DPN_WAIT_MS;
-				NextPollTime = 0;
+				NextPollTime = CONTROL_TimeCounter + DPN_CAN_REQUEST_DELAY_MS;
 				DPN_SubState = DPNS_CfgWaitReady;
 			}
 			else
@@ -405,19 +383,43 @@ void DPN_Process()
 		case DPNS_CfgWaitReady:
 			if(CONTROL_TimeCounter > WaitDeadline)
 			{
-				DPN_FsmFailTimeout();
+				CONTROL_SwitchToFault(DF_DPN_FAILED_TO_FINISH);
+				FsmResult = DPN_FR_Fail;
 				break;
 			}
 
-			if(!DPN_PollReadyAfterCommand(&Ready))
+			if(!DPN_PollReadyAfterCommand(&Ready, true))
 				break;
 
 			if(Ready)
 			{
-				if(DataTable[REG_DPN_EMULATED] || DPN_CheckOPResult(OPRESULT_OK))
+				Int16U OpResult = 0;
+
+				if(DataTable[REG_DPN_EMULATED])
+				{
 					DPN_SubState = DPNS_CfgReadInductance;
+					break;
+				}
+
+				if(!BHL_ReadRegister(DataTable[REG_DPN_CAN_ID], REG_DPN_OP_RESULT, &OpResult))
+				{
+					CONTROL_SwitchToFault(DF_DPN_INTERFACE);
+					FsmResult = DPN_FR_Fail;
+					break;
+				}
+
+				if(OpResult == OPRESULT_FAIL)
+				{
+					Int16U Problem = 0;
+					DPN_ReadRegister(REG_DPN_PROBLEM, &Problem);
+					DataTable[REG_DBG] = Problem;
+					CONTROL_FinishedWithProblem(PROBLEM_DPN_FAILED_COMMAND);
+					DPN_SubState = DPNS_Idle;
+					FsmResult = DPN_FR_Fail;
+					SawBusy = false;
+				}
 				else
-					DPN_FsmFailProblem();
+					DPN_SubState = DPNS_CfgReadInductance;
 			}
 			break;
 
@@ -443,12 +445,16 @@ void DPN_Process()
 			if(DataTable[REG_DPN_EMULATED])
 			{
 				DataTable[REG_SELECTED_PULSE_WIDTH] = DataTable[REG_TEST_SECOND_PULSE];
-				DPN_FsmSucceed();
+				DPN_SubState = DPNS_Idle;
+				FsmResult = DPN_FR_Ok;
+				SawBusy = false;
 			}
 			else if(DPN_ReadRegisterFloat(REG_DPN_MEASURE_DURATION, &Value))
 			{
 				DataTable[REG_SELECTED_PULSE_WIDTH] = Value / 1000.0f;
-				DPN_FsmSucceed();
+				DPN_SubState = DPNS_Idle;
+				FsmResult = DPN_FR_Ok;
+				SawBusy = false;
 			}
 			else
 			{
@@ -460,8 +466,9 @@ void DPN_Process()
 		case DPNS_StopCall:
 			if(DPN_Disable())
 			{
+				SawBusy = false;
 				WaitDeadline = CONTROL_TimeCounter + DPN_WAIT_MS;
-				NextPollTime = 0;
+				NextPollTime = CONTROL_TimeCounter + DPN_CAN_REQUEST_DELAY_MS;
 				DPN_SubState = DPNS_StopWait;
 			}
 			else
@@ -474,15 +481,20 @@ void DPN_Process()
 		case DPNS_StopWait:
 			if(CONTROL_TimeCounter > WaitDeadline)
 			{
-				DPN_FsmFailTimeout();
+				CONTROL_SwitchToFault(DF_DPN_FAILED_TO_FINISH);
+				FsmResult = DPN_FR_Fail;
 				break;
 			}
 
-			if(!DPN_PollReadyAfterCommand(&Ready))
+			if(!DPN_PollReadyAfterCommand(&Ready, false))
 				break;
 
 			if(Ready)
-				DPN_FsmSucceed();
+			{
+				DPN_SubState = DPNS_Idle;
+				FsmResult = DPN_FR_Ok;
+				SawBusy = false;
+			}
 			break;
 
 		default:

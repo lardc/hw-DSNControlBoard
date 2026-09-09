@@ -35,8 +35,7 @@ void LL_SetStStart(bool State);
 // Безопасность (Trig = низкий уровень на SFT_IN, см. ТТ)
 bool LL_IsSafetyTrig();
 void LL_SafetyIgnore(bool Ignore);
-
-void LL_Safety(bool Enable);
+void LL_Safety();	// Снять GateCtrl H/L
 
 // АЦП диагностики силовых линий: мВ на входе АЦП (далее ×K + Offset → REG_ADC_DIAG_RAW)
 float LL_MeasureAdcDiag();

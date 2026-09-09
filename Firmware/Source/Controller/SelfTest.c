@@ -57,7 +57,6 @@ static void SELFTEST_Succeed();
 static void SELFTEST_ResetCheck();
 static void SELFTEST_SetRelayBit(Int16U Bit, Boolean On);
 static void SELFTEST_GateOn(IGBTGD_Channel Channel);
-static void SELFTEST_GateOff();
 static Boolean SELFTEST_DurationOk(Int32U PulseDuration, Int32U ExpectedDuration, Boolean CompareExpected);
 static Boolean SELFTEST_AmplitudeOk(Int32U PulseOn, Int32U PulseOff, AmplitudeCompare Mode);
 static void SELFTEST_SwitchToNextState(SelfTestProcess Result, SelfTestSubState NextState);
@@ -139,13 +138,6 @@ static void SELFTEST_GateOn(IGBTGD_Channel Channel)
 		LL_SetGateCtrlH(false);
 		LL_SetGateCtrlL(true);
 	}
-}
-//-----------------------------------------------
-
-static void SELFTEST_GateOff()
-{
-	LL_SetGateCtrlH(false);
-	LL_SetGateCtrlL(false);
 }
 //-----------------------------------------------
 
@@ -247,7 +239,7 @@ static SelfTestProcess SELFTEST_PulseCheck(IGBTGD_Channel Channel, Int16U RelayB
 			}
 			else if(CONTROL_TimeCounter > Timeout)
 			{
-				SELFTEST_GateOff();
+				LL_Safety();
 				CheckResult = STP_Failed;
 				CheckStage = CHS_Finish;
 			}
@@ -257,7 +249,7 @@ static SelfTestProcess SELFTEST_PulseCheck(IGBTGD_Channel Channel, Int16U RelayB
 			if(LL_CaptureEdgeReady(&Stamp))
 			{
 				LastPulseUs = (Int32U)((Int16U)(Stamp - CapRiseStamp));
-				SELFTEST_GateOff();
+				LL_Safety();
 
 				if(ScanAllRg)
 					Ok = SELFTEST_DurationOk(LastPulseUs, (Int32U)DataTable[REG_ST_RG_0_DURATION + RgIndex], true);
@@ -287,14 +279,14 @@ static SelfTestProcess SELFTEST_PulseCheck(IGBTGD_Channel Channel, Int16U RelayB
 			}
 			else if(CONTROL_TimeCounter > Timeout)
 			{
-				SELFTEST_GateOff();
+				LL_Safety();
 				CheckResult = STP_Failed;
 				CheckStage = CHS_Finish;
 			}
 			break;
 
 		case CHS_Finish:
-			SELFTEST_GateOff();
+			LL_Safety();
 			SELFTEST_SetRelayBit(RelayBit, false);
 			if(ClearMuxAfter)
 				IGBTGD_SetMux(Channel, false);
@@ -308,7 +300,7 @@ static SelfTestProcess SELFTEST_PulseCheck(IGBTGD_Channel Channel, Int16U RelayB
 
 	if(CheckStage == CHS_Finish)
 	{
-		SELFTEST_GateOff();
+		LL_Safety();
 		SELFTEST_SetRelayBit(RelayBit, false);
 		if(ClearMuxAfter)
 			IGBTGD_SetMux(Channel, false);
@@ -364,7 +356,7 @@ static SelfTestProcess SELFTEST_AmplitudeCheck(IGBTGD_Channel Channel, Int16U Re
 			}
 			else if(CONTROL_TimeCounter > Timeout)
 			{
-				SELFTEST_GateOff();
+				LL_Safety();
 				CheckResult = STP_Failed;
 				CheckStage = CHS_Finish;
 			}
@@ -374,7 +366,7 @@ static SelfTestProcess SELFTEST_AmplitudeCheck(IGBTGD_Channel Channel, Int16U Re
 			if(LL_CaptureEdgeReady(&Stamp))
 			{
 				PulseOnUs = (Int32U)((Int16U)(Stamp - CapRiseStamp));
-				SELFTEST_GateOff();
+				LL_Safety();
 				LastPulseUs = 0;
 				CapRiseStamp = 0;
 				LL_CaptureArmEdge(FALSE);
@@ -383,7 +375,7 @@ static SelfTestProcess SELFTEST_AmplitudeCheck(IGBTGD_Channel Channel, Int16U Re
 			}
 			else if(CONTROL_TimeCounter > Timeout)
 			{
-				SELFTEST_GateOff();
+				LL_Safety();
 				CheckResult = STP_Failed;
 				CheckStage = CHS_Finish;
 			}
@@ -422,7 +414,7 @@ static SelfTestProcess SELFTEST_AmplitudeCheck(IGBTGD_Channel Channel, Int16U Re
 			break;
 
 		case CHS_Finish:
-			SELFTEST_GateOff();
+			LL_Safety();
 			if(CloseRelayAtEnd || CheckResult == STP_Failed)
 			{
 				SELFTEST_SetRelayBit(RelayBit, false);
@@ -438,7 +430,7 @@ static SelfTestProcess SELFTEST_AmplitudeCheck(IGBTGD_Channel Channel, Int16U Re
 
 	if(CheckStage == CHS_Finish)
 	{
-		SELFTEST_GateOff();
+		LL_Safety();
 		if(CloseRelayAtEnd || CheckResult == STP_Failed)
 		{
 			SELFTEST_SetRelayBit(RelayBit, false);

@@ -268,8 +268,7 @@ void CONTROL_SafetyCheck()
 	if(SafetyFlushPending)
 	{
 		SafetyFlushPending = false;
-		LL_Safety(true);
-		LL_Safety(false);
+		LL_Safety();
 
 		if(DataTable[REG_SAFETY_ACTIVE])
 		{
@@ -288,7 +287,7 @@ void CONTROL_SafetyIrqTick()
 	if(SafetyTrig && !PrevSafetyTrig)
 	{
 		SafetyFlushPending = true;
-		LL_Safety(true);
+		LL_Safety();
 	}
 
 	PrevSafetyTrig = SafetyTrig;
@@ -348,7 +347,7 @@ void CONTROL_InitStoragePointers()
 }
 //------------------------------------------
 
-void CONTROL_HandleFrontPanelLamp(Boolean Forced)
+void CONTROL_HandleFrontPanelLamp()
 {
 	static Int64U FPLampCounter = 0;
 
@@ -362,22 +361,8 @@ void CONTROL_HandleFrontPanelLamp(Boolean Forced)
 	}
 	else
 	{
-		if(CONTROL_State == DS_None && FPLampCounter)
-		{
-			LL_SetStateFPLed(false);
-			FPLampCounter = 0;
-		}
-
-		if(CONTROL_State != DS_None && CONTROL_State != DS_SafetyTrig)
-		{
-			if(Forced)
-			{
-				LL_SetStateFPLed(true);
-				FPLampCounter = CONTROL_TimeCounter + TIME_FP_LED_ON_STATE;
-			}
-			else if(CONTROL_TimeCounter >= FPLampCounter)
-				LL_SetStateFPLed(false);
-		}
+		LL_SetStateFPLed(false);
+		FPLampCounter = 0;
 	}
 }
 //-----------------------------------------------

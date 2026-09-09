@@ -129,13 +129,10 @@ void LL_SafetyIgnore(bool Ignore)
 }
 //-----------------------------
 
-void LL_Safety(bool Enable)
+void LL_Safety()
 {
-	if(Enable)
-	{
-		LL_SetGateCtrlH(false);
-		LL_SetGateCtrlL(false);
-	}
+	LL_SetGateCtrlH(false);
+	LL_SetGateCtrlL(false);
 }
 //-----------------------------
 
