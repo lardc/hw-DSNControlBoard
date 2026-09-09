@@ -247,6 +247,7 @@ static SelfTestProcess SELFTEST_PulseCheck(IGBTGD_Channel Channel, Int16U RelayB
 			}
 			else if(CONTROL_TimeCounter > Timeout)
 			{
+				SELFTEST_GateOff();
 				CheckResult = STP_Failed;
 				CheckStage = CHS_Finish;
 			}
@@ -286,6 +287,7 @@ static SelfTestProcess SELFTEST_PulseCheck(IGBTGD_Channel Channel, Int16U RelayB
 			}
 			else if(CONTROL_TimeCounter > Timeout)
 			{
+				SELFTEST_GateOff();
 				CheckResult = STP_Failed;
 				CheckStage = CHS_Finish;
 			}
@@ -302,6 +304,16 @@ static SelfTestProcess SELFTEST_PulseCheck(IGBTGD_Channel Channel, Int16U RelayB
 		default:
 			CheckStage = CHS_Init;
 			break;
+	}
+
+	if(CheckStage == CHS_Finish)
+	{
+		SELFTEST_GateOff();
+		SELFTEST_SetRelayBit(RelayBit, false);
+		if(ClearMuxAfter)
+			IGBTGD_SetMux(Channel, false);
+		CheckStage = CHS_Init;
+		return CheckResult;
 	}
 
 	return STP_InProcess;
@@ -352,6 +364,7 @@ static SelfTestProcess SELFTEST_AmplitudeCheck(IGBTGD_Channel Channel, Int16U Re
 			}
 			else if(CONTROL_TimeCounter > Timeout)
 			{
+				SELFTEST_GateOff();
 				CheckResult = STP_Failed;
 				CheckStage = CHS_Finish;
 			}
@@ -370,6 +383,7 @@ static SelfTestProcess SELFTEST_AmplitudeCheck(IGBTGD_Channel Channel, Int16U Re
 			}
 			else if(CONTROL_TimeCounter > Timeout)
 			{
+				SELFTEST_GateOff();
 				CheckResult = STP_Failed;
 				CheckStage = CHS_Finish;
 			}
@@ -420,6 +434,18 @@ static SelfTestProcess SELFTEST_AmplitudeCheck(IGBTGD_Channel Channel, Int16U Re
 		default:
 			CheckStage = CHS_Init;
 			break;
+	}
+
+	if(CheckStage == CHS_Finish)
+	{
+		SELFTEST_GateOff();
+		if(CloseRelayAtEnd || CheckResult == STP_Failed)
+		{
+			SELFTEST_SetRelayBit(RelayBit, false);
+			AmplitudeRelayOn = false;
+		}
+		CheckStage = CHS_Init;
+		return CheckResult;
 	}
 
 	return STP_InProcess;
