@@ -115,7 +115,7 @@ const TableItemConstraint Constraint[DATA_TABLE_WP_START] = {
 		{0, 0, 0},																	// 103
 		{0, INT16U_MAX, 0},															// 104
 		{0, INT16U_MAX, 0},															// 105
-		{0, 0, 0},																	// 106
+		{NO, YES, NO},																// 106
 		{0, 0, 0},																	// 107
 		{0, 0, 0},																	// 108
 		{0, 0, 0},																	// 109

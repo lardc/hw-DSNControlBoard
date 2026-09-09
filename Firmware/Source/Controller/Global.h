@@ -17,7 +17,8 @@
 #define TIME_FP_LED_FAULT_BLINK					250		// Мигание светодиодом в состоянии Fault
 #define TIME_FP_LED_ON_STATE					500		// Время зажигания индикатора на передний панели в нормальном режиме, мс
 #define TIME_COOLING_PERIOD_MS					10000	// Период опроса температуры / FAN, мс
-#define COMM_DELAY_MS							20		// Задержка коммутации реле
+#define COUNTER_SAVE_TIMEOUT_MS					1800000	// Период автосохранения счётчиков во flash, мс
+#define COMM_DELAY_MS							20		// Задержка коммутации реле, мс
 #define TIME_SPI_DELAY_US						5		// Время задержки SPI
 
 // Параметры измерения

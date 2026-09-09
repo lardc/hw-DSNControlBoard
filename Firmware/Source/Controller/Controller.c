@@ -28,6 +28,8 @@ static volatile bool SafetyFlushPending = false;
 //
 volatile Int16U CONTROL_DiagCounter = 0;
 volatile float CONTROL_DiagData[VALUES_DIAG_SIZE];
+volatile Boolean RequestSaveToFlash = false;
+static Int64U CounterSaveTimer = 0;
 //
 
 // Forward functions
@@ -57,8 +59,8 @@ void CONTROL_Init()
 	DEVPROFILE_Init(&CONTROL_DispatchAction, &CycleActive);
 	DEVPROFILE_InitFEPService(FEPIndexes, FEPSized, FEPCounters, FEPDatas);
 
-	STF_LoadCounters();
 	CONTROL_InitStoragePointers();
+	STF_LoadCounters();
 
 	// Сброс значений
 	DEVPROFILE_ResetControlSection();
@@ -66,6 +68,7 @@ void CONTROL_Init()
 
 	// Принудительная остановка DPN при старте
 	DPN_RequestStop();
+	CounterSaveTimer = CONTROL_TimeCounter;
 }
 //------------------------------------------
 
@@ -73,6 +76,20 @@ void CONTROL_Idle()
 {
 	CONTROL_SafetyCheck();
 	LOGIC_Process();
+
+	if(CONTROL_State != DS_InProcess)
+	{
+		if(RequestSaveToFlash)
+		{
+			RequestSaveToFlash = false;
+			STF_SaveDiagData();
+		}
+		else if(DataTable[REG_CNT_ACTIVE] && (CONTROL_TimeCounter - CounterSaveTimer) >= COUNTER_SAVE_TIMEOUT_MS)
+		{
+			STF_SaveCounterData();
+			CounterSaveTimer = CONTROL_TimeCounter;
+		}
+	}
 
 	DEVPROFILE_ProcessRequests();
 	CONTROL_UpdateWatchDog();
@@ -300,7 +317,27 @@ void CONTROL_FinishedWithProblem(Int16U Problem)
 
 void CONTROL_InitStoragePointers()
 {
-	// Добавить необходимые регистры для сохранения
+	Int16U i;
+
+	for(i = 0; i < ZCRD_RELAY_COUNTERS; ++i)
+		STF_AssignCounterPointer(i, (Int32U)&CycleCounters[i]);
+
+	STF_AssignPointer(0, (Int32U)&DataTable[REG_DEV_STATE]);
+	STF_AssignPointer(1, (Int32U)&DataTable[REG_FAULT_REASON]);
+	STF_AssignPointer(2, (Int32U)&DataTable[REG_DISABLE_REASON]);
+	STF_AssignPointer(3, (Int32U)&DataTable[REG_WARNING]);
+	STF_AssignPointer(4, (Int32U)&DataTable[REG_PROBLEM]);
+	STF_AssignPointer(5, (Int32U)&DataTable[REG_OP_RESULT]);
+	STF_AssignPointer(6, (Int32U)&DataTable[REG_SELF_TEST_OP_RESULT]);
+	STF_AssignPointer(7, (Int32U)&DataTable[REG_SUB_STATE]);
+	STF_AssignPointer(8, (Int32U)&DataTable[REG_TEMPERATURE]);
+	STF_AssignPointer(9, (Int32U)&DataTable[REG_SELECTED_INDUCTANCE]);
+	STF_AssignPointer(10, (Int32U)&DataTable[REG_SELECTED_PULSE_WIDTH]);
+	STF_AssignPointer(11, (Int32U)&DataTable[REG_ADAPTER_MAX_VOLTAGE]);
+	STF_AssignPointer(12, (Int32U)&DataTable[REG_ADAPTER_MAX_CURRENT]);
+	STF_AssignPointer(13, (Int32U)&DataTable[REG_EXT_UNIT_ERROR_CODE]);
+	STF_AssignPointer(14, (Int32U)&DataTable[REG_EXT_UNIT_FUNCTION]);
+	STF_AssignPointer(15, (Int32U)&DataTable[REG_EXT_UNIT_EXT_DATA]);
 }
 //------------------------------------------
 
