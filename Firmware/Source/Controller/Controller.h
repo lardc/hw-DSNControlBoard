@@ -39,7 +39,7 @@ void CONTROL_ResetToDefaultState();
 bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError);
 void CONTROL_UpdateWatchDog();
 void CONTROL_ResetOutputRegisters();
-void CONTROL_HandleFrontPanelLamp();
+void CONTROL_HandleFrontPanelLamp(Boolean Forced);
 void CONTROL_SafetyIrqTick();
 void CONTROL_FinishedWithProblem(Int16U Problem);
 

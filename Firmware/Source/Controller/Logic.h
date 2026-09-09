@@ -37,6 +37,12 @@ typedef struct __LogicProbeInfo
 	Boolean Present;
 } LogicProbeInfo;
 
+typedef struct __LogicSwitchBoardInfo
+{
+	Int16U MaxVoltage;
+	Int16U MaxCurrent;
+} LogicSwitchBoardInfo;
+
 typedef struct __LogicAdapterState
 {
 	Boolean Cached;
@@ -45,6 +51,7 @@ typedef struct __LogicAdapterState
 	Int8U GateDriverCount;
 	Int8U SwitchBoardCount;
 	LogicProbeInfo Probe;
+	LogicSwitchBoardInfo SwitchBoard[LOGIC_MAX_SWITCH_BOARDS];
 } LogicAdapterState;
 
 extern LogicAdapterState LOGIC_Adapter;

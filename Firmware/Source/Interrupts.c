@@ -46,7 +46,7 @@ void TIM7_IRQHandler()
 		}
 
 		CONTROL_SafetyIrqTick();
-		CONTROL_HandleFrontPanelLamp();
+		CONTROL_HandleFrontPanelLamp(false);
 
 		TIM_StatusClear(TIM7);
 	}

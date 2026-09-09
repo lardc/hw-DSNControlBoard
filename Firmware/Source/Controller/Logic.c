@@ -21,6 +21,7 @@ LogicAdapterState LOGIC_Adapter = {0};
 LogicSubState LOGIC_SubState = SS_Idle;
 static Boolean Configured = false;
 static Int64U CoolingDeadline = 0;
+static Int64U AdcDiagDeadline = 0;
 static Int64U Timeout = 0;
 static DeviceState StateAfterOp = DS_SafetyActive;
 
@@ -28,12 +29,14 @@ static DeviceState StateAfterOp = DS_SafetyActive;
 //
 static void LOGIC_ClearAdapterState();
 static void LOGIC_FillProbeFromLabels(LogicProbeInfo *Probe, const MemLabelEntry *Labels, Int8U LabelCount);
+static void LOGIC_FillSwitchBoardFromLabels(LogicSwitchBoardInfo *Board, const MemLabelEntry *Labels, Int8U LabelCount);
 static Int16U LOGIC_GetDeviceKind(const MemLabelEntry *Labels, Int8U LabelCount);
 static Boolean LOGIC_CheckTemperaturePresent();
 static void LOGIC_SetSubState(Int16U Value);
 static void LOGIC_FinishOk();
 static void LOGIC_FinishProblem(Int16U Problem);
 static void LOGIC_ProcessCooling();
+static void LOGIC_ProcessAdcDiag();
 static void LOGIC_ProcessOp();
 static Boolean LOGIC_ValidateAdapterForTest();
 static Int8U LOGIC_RequiredSwitchBoards(Int16U Scheme);
@@ -46,6 +49,8 @@ static Boolean LOGIC_IsPulseSubState(LogicSubState State);
 //
 static void LOGIC_ClearAdapterState()
 {
+	Int8U i;
+
 	LOGIC_Adapter.Cached = false;
 	LOGIC_Adapter.TemperaturePresent = false;
 	LOGIC_Adapter.ProbeCount = 0;
@@ -58,6 +63,12 @@ static void LOGIC_ClearAdapterState()
 	LOGIC_Adapter.Probe.MaxCurrent = 0;
 	LOGIC_Adapter.Probe.Serial = 0;
 	LOGIC_Adapter.Probe.Version = 0;
+
+	for(i = 0; i < LOGIC_MAX_SWITCH_BOARDS; ++i)
+	{
+		LOGIC_Adapter.SwitchBoard[i].MaxVoltage = 0;
+		LOGIC_Adapter.SwitchBoard[i].MaxCurrent = 0;
+	}
 }
 //-----------------------------------------------
 
@@ -97,6 +108,30 @@ static void LOGIC_FillProbeFromLabels(LogicProbeInfo *Probe, const MemLabelEntry
 				break;
 			case ML_Version:
 				Probe->Version = Labels[Index].Value;
+				break;
+			default:
+				break;
+		}
+	}
+}
+//-----------------------------------------------
+
+static void LOGIC_FillSwitchBoardFromLabels(LogicSwitchBoardInfo *Board, const MemLabelEntry *Labels, Int8U LabelCount)
+{
+	Int8U Index;
+
+	Board->MaxVoltage = 0;
+	Board->MaxCurrent = 0;
+
+	for(Index = 0; Index < LabelCount; ++Index)
+	{
+		switch(Labels[Index].Type)
+		{
+			case ML_MaxVoltage:
+				Board->MaxVoltage = Labels[Index].Value;
+				break;
+			case ML_MaxCurrent:
+				Board->MaxCurrent = Labels[Index].Value;
 				break;
 			default:
 				break;
@@ -167,6 +202,7 @@ static Boolean LOGIC_ValidateAdapterForTest()
 {
 	Int16U Scheme = (Int16U)DataTable[REG_TEST_SCHEME];
 	Int8U RequiredSw;
+	Int8U i;
 
 	if(!LOGIC_Adapter.Cached
 			|| LOGIC_Adapter.ProbeCount != 1
@@ -197,6 +233,21 @@ static Boolean LOGIC_ValidateAdapterForTest()
 	{
 		LOGIC_FinishProblem(PROBLEM_VALIDATE_CURRENT);
 		return false;
+	}
+
+	for(i = 0; i < LOGIC_Adapter.SwitchBoardCount; ++i)
+	{
+		if(DataTable[REG_TEST_VOLTAGE] > LOGIC_Adapter.SwitchBoard[i].MaxVoltage)
+		{
+			LOGIC_FinishProblem(PROBLEM_VALIDATE_VOLTAGE);
+			return false;
+		}
+
+		if(DataTable[REG_TEST_CURRENT] > LOGIC_Adapter.SwitchBoard[i].MaxCurrent)
+		{
+			LOGIC_FinishProblem(PROBLEM_VALIDATE_CURRENT);
+			return false;
+		}
 	}
 
 	return true;
@@ -292,6 +343,17 @@ static void LOGIC_ProcessCooling()
 }
 //-----------------------------------------------
 
+static void LOGIC_ProcessAdcDiag()
+{
+	if(CONTROL_TimeCounter < AdcDiagDeadline)
+		return;
+
+	AdcDiagDeadline = CONTROL_TimeCounter + TIME_ADC_DIAG_PERIOD_MS;
+	DataTable[REG_ADC_DIAG_RAW] =
+			LL_MeasureAdcDiag() * DataTable[REG_ADC_DIAG_K] + DataTable[REG_ADC_DIAG_OFFSET];
+}
+//-----------------------------------------------
+
 static void LOGIC_ProcessOp()
 {
 	switch(LOGIC_SubState)
@@ -301,7 +363,7 @@ static void LOGIC_ProcessOp()
 
 		case SS_CfgScan:
 			LOGIC_SetSubState(SS_CfgScan);
-			if(!LOGIC_ScanAdapter())
+			if(!(LOGIC_Adapter.Cached ? LOGIC_RefreshAdapter() : LOGIC_ScanAdapter()))
 			{
 				if(!LOGIC_Adapter.TemperaturePresent)
 					LOGIC_FinishProblem(PROBLEM_OW_TEMP);
@@ -345,7 +407,13 @@ static void LOGIC_ProcessOp()
 					LOGIC_SubState = SS_Idle;
 					LOGIC_SetSubState(SS_Idle);
 					if(CONTROL_State != DS_Fault)
+					{
+						if(DataTable[REG_PROBLEM] == PROBLEM_NONE)
+							CONTROL_FinishedWithProblem(PROBLEM_DPN_NOT_READY);
+						else
+							DataTable[REG_OP_RESULT] = OPRESULT_FAIL;
 						CONTROL_SetDeviceState(StateAfterOp);
+					}
 					break;
 				default:
 					LOGIC_FinishProblem(PROBLEM_DPN_NOT_READY);
@@ -367,8 +435,16 @@ static void LOGIC_ProcessOp()
 			if(CONTROL_TimeCounter > Timeout)
 			{
 				LOGIC_SetGateCtrl(false);
-				Timeout = CONTROL_TimeCounter + (Int32U)DataTable[REG_TEST_PULSE_PAUSE];
-				LOGIC_SubState = SS_PulsePause;
+				if((Int32U)DataTable[REG_TEST_SECOND_PULSE] == 0)
+				{
+					LOGIC_StopProcess();
+					LOGIC_FinishOk();
+				}
+				else
+				{
+					Timeout = CONTROL_TimeCounter + (Int32U)DataTable[REG_TEST_PULSE_PAUSE];
+					LOGIC_SubState = SS_PulsePause;
+				}
 			}
 			break;
 
@@ -405,6 +481,7 @@ static void LOGIC_ProcessOp()
 void LOGIC_Process()
 {
 	LOGIC_ProcessCooling();
+	LOGIC_ProcessAdcDiag();
 	DPN_Process();
 	SELFTEST_Process();
 	LOGIC_ProcessOp();
@@ -454,7 +531,11 @@ Boolean LOGIC_ScanAdapter()
 
 			case LOGIC_ML_SWITCH_BOARD:
 				if(LOGIC_Adapter.SwitchBoardCount < LOGIC_MAX_SWITCH_BOARDS)
+				{
+					LOGIC_FillSwitchBoardFromLabels(&LOGIC_Adapter.SwitchBoard[LOGIC_Adapter.SwitchBoardCount],
+							Labels, LabelCount);
 					LOGIC_Adapter.SwitchBoardCount++;
+				}
 				break;
 
 			default:

@@ -7,20 +7,20 @@ typedef enum __SelfTestSubState
 {
 	STS_None = 0,
 
-	STS_ProtectionBoard_H_DUT,
-	STS_ProtectionBoard_L_DUT,
-	STS_ProtectionBoard_H_SwitchBoard,
-	STS_ProtectionBoard_L_SwitchBoard,
+	STS_ProtectionBoardHDut,
+	STS_ProtectionBoardLDut,
+	STS_ProtectionBoardHSwitchBoard,
+	STS_ProtectionBoardLSwitchBoard,
 
-	STS_GateResistors_H,
-	STS_GateResistors_L,
+	STS_GateResistorsH,
+	STS_GateResistorsL,
 
-	STS_Amplitude_H_PM20,
-	STS_Amplitude_H_M15_P20,
-	STS_Amplitude_H_M20_P15,
-	STS_Amplitude_L_PM20,
-	STS_Amplitude_L_M15_P20,
-	STS_Amplitude_L_M20_P15,
+	STS_AmplitudeHPm20,
+	STS_AmplitudeHM15P20,
+	STS_AmplitudeHM20P15,
+	STS_AmplitudeLPm20,
+	STS_AmplitudeLM15P20,
+	STS_AmplitudeLM20P15,
 
 	STS_Finish
 } SelfTestSubState;

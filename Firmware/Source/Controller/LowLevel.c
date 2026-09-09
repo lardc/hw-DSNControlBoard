@@ -6,6 +6,7 @@
 #include "Global.h"
 #include "SysConfig.h"
 #include "ZwTIM.h"
+#include "ZwADC.h"
 
 // Forward
 //
@@ -117,7 +118,8 @@ void LL_SetStStart(bool State)
 
 bool LL_IsSafetyTrig()
 {
-	return GPIO_GetState(GPIO_SFT_IN);
+
+	return !GPIO_GetState(GPIO_SFT_IN);
 }
 //-----------------------------
 
@@ -134,6 +136,13 @@ void LL_Safety(bool Enable)
 		LL_SetGateCtrlH(false);
 		LL_SetGateCtrlL(false);
 	}
+}
+//-----------------------------
+
+float LL_MeasureAdcDiag()
+{
+	float RawMv = (float)ADC_Measure(ADC2, ADC_DIAG_CHANNEL) * ADC_REF_VOLTAGE / ADC_RESOLUTION;
+	return RawMv;
 }
 //-----------------------------
 
@@ -180,6 +189,30 @@ Boolean LL_CaptureMeasureHighPulseUs(volatile Int64U *pTimeMs, Int32U TimeoutMs,
 
 	// TIM2 = 1 МГц → разница счётчика = мкс (для импульса < 65536 мкс)
 	*pWidthUs = (Int32U)((Int16U)(tFall - tRise));
+	return TRUE;
+}
+//-----------------------------
+
+void LL_CaptureArmEdge(Boolean Falling)
+{
+	if(Falling)
+		TIM2->CCER |= TIM_CCER_CC2P;
+	else
+		TIM2->CCER &= ~TIM_CCER_CC2P;
+
+	TIM2->SR &= ~(TIM_SR_CC2IF | TIM_SR_CC2OF);
+}
+//-----------------------------
+
+Boolean LL_CaptureEdgeReady(pInt16U pStamp)
+{
+	if(!(TIM2->SR & TIM_SR_CC2IF))
+		return FALSE;
+
+	if(pStamp)
+		*pStamp = (Int16U)TIM2->CCR2;
+
+	TIM2->SR &= ~(TIM_SR_CC2IF | TIM_SR_CC2OF);
 	return TRUE;
 }
 //-----------------------------

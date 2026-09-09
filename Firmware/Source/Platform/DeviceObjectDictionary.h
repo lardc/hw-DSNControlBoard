@@ -78,8 +78,8 @@
 #define REG_TEST_CURRENT						129	// Рабочий ток, А
 #define REG_TEST_POS							130	// Позиция: 0 = H, 1 = L
 #define REG_TEST_SCHEME							131	// Код схемы: SD=17, HB=18, LC=19, HC=20, DD=21
-#define REG_TEST_PULSE_PAUSE					132	// Пауза между импульсами, мс
-#define REG_TEST_SECOND_PULSE					133	// Длительность второго импульса, мс
+#define REG_TEST_PULSE_PAUSE					132	// Пауза между импульсами, мс (контракт с хостом; в ТТ указаны мкс)
+#define REG_TEST_SECOND_PULSE					133	// Длительность второго импульса, мс (контракт с хостом; в ТТ указаны мкс)
 #define REG_GATE_OPEN_V							134	// Отпирающее напряжение затвора, В
 #define REG_GATE_CLOSE_V						135	// Запирающее напряжение затвора, В
 #define REG_GATE_RG_H							136	// Затворное сопротивление H, Ом
@@ -100,10 +100,10 @@
 //
 #define REG_TEMPERATURE							200	// Температура адаптера, °C
 #define REG_SELECTED_INDUCTANCE					201	// Индуктивность с DPN, мкГн
-#define REG_SELECTED_PULSE_WIDTH				202	// Длительность 1-го импульса с DPN, мс
+#define REG_SELECTED_PULSE_WIDTH				202	// Длительность 1-го импульса с DPN, мс (DPN отдаёт мкс → /1000)
 #define REG_ADAPTER_MAX_VOLTAGE					203	// MaxV с метки Probe
 #define REG_ADAPTER_MAX_CURRENT					204	// MaxI с метки Probe
-#define REG_ADC_DIAG_RAW						205	// Сырое/приведённое значение АЦП диагностики
+#define REG_ADC_DIAG_RAW						205	// АЦП диагностики: мВ×K + Offset (калибровка уточняется)
 //
 #define REG_EXT_UNIT_ERROR_CODE					220	// Ошибка интерфейса CAN: код ошибки
 #define REG_EXT_UNIT_FUNCTION					221	// Ошибка интерфейса CAN: код функции

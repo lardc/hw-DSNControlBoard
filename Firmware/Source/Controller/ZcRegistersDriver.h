@@ -29,12 +29,15 @@ typedef enum __ZcRD_DriverChannel
 #define ZCRD_CS1_ACTIVE			(ZCRD_BIT_CS2)			// CS1=0, CS2=1
 #define ZCRD_CS2_ACTIVE			(ZCRD_BIT_CS1)			// CS1=1, CS2=0
 
-// Счётчики ресурса: 6 реле на EXP (биты 0..5 — заглушка раскладки до сверки со схемой)
+// Счётчики ресурса (ТТ): 0..3 — ST_Relay на EXP; 4..5 — MUX-реле драйверов H/L
 #define ZCRD_RELAY_COUNTERS		6
+#define ZCRD_ST_RELAY_COUNT		4
 #define ZCRD_ST_RELAY_H_BIT		(1u << 0)
 #define ZCRD_ST_RELAY_L_BIT		(1u << 1)
 #define ZCRD_ST_RELAY_HE_BIT	(1u << 2)
 #define ZCRD_ST_RELAY_LE_BIT	(1u << 3)
+#define ZCRD_CNT_MUX_H			4	// CTRL_H- на POT_C (MUX IGBTGateDriverH)
+#define ZCRD_CNT_MUX_L			5	// CTRL_L- на POT_L (MUX IGBTGateDriverL)
 
 extern Int32U CycleCounters[ZCRD_RELAY_COUNTERS];
 

@@ -340,6 +340,15 @@ void DPN_Process()
 			break;
 
 		case DPNS_CfgWriteVoltage:
+			if(!DPN_CheckReady())
+			{
+				DPN_SubState = DPNS_Idle;
+				FsmResult = DPN_FR_Fail;
+				if(CONTROL_State != DS_Fault)
+					CONTROL_FinishedWithProblem(PROBLEM_DPN_NOT_READY);
+				break;
+			}
+
 			if(DPN_WriteRegFloat(REG_DPN_VOLTAGE, DataTable[REG_TEST_VOLTAGE]))
 				DPN_SubState = DPNS_CfgWriteCurrent;
 			else

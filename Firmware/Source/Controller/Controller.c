@@ -77,7 +77,7 @@ void CONTROL_Idle()
 	CONTROL_SafetyCheck();
 	LOGIC_Process();
 
-	if(CONTROL_State != DS_InProcess)
+	if(CONTROL_State != DS_InProcess && CONTROL_State != DS_InSelfTest)
 	{
 		if(RequestSaveToFlash)
 		{
@@ -114,6 +114,7 @@ void CONTROL_SwitchToFault(Int16U Reason)
 	CONTROL_SetDeviceState(DS_Fault);
 	DataTable[REG_FAULT_REASON] = Reason;
 	DataTable[REG_OP_RESULT] = OPRESULT_FAIL;
+	RequestSaveToFlash = true;
 }
 //------------------------------------------
 
@@ -153,12 +154,16 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 			break;
 
 		case ACT_DISABLE_POWER:
-			if(CONTROL_State == DS_Enabled || CONTROL_State == DS_SafetyActive)
+			if(CONTROL_State == DS_Enabled || CONTROL_State == DS_SafetyActive
+					|| CONTROL_State == DS_InSelfTest)
 			{
-				if(DPN_SubState != DPNS_Idle || LOGIC_SubState != SS_Idle || SELFTEST_SubState != STS_None)
+				if(DPN_SubState != DPNS_Idle || LOGIC_SubState != SS_Idle)
+					*pUserError = ERR_DEVICE_NOT_READY;
+				else if(SELFTEST_SubState != STS_None && CONTROL_State != DS_InSelfTest)
 					*pUserError = ERR_DEVICE_NOT_READY;
 				else
 				{
+					SELFTEST_Stop();
 					LOGIC_Deactivate();
 					CONTROL_SetDeviceState(DS_None);
 				}
@@ -197,8 +202,10 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 
 		case ACT_SET_INACTIVE:
 			if(CONTROL_State == DS_Enabled || CONTROL_State == DS_SafetyActive
-					|| CONTROL_State == DS_SafetyTrig || CONTROL_State == DS_InProcess)
+					|| CONTROL_State == DS_SafetyTrig || CONTROL_State == DS_InProcess
+					|| CONTROL_State == DS_InSelfTest)
 			{
+				SELFTEST_Stop();
 				LOGIC_Deactivate();
 				DPN_ClearSafetyTrig();
 				CONTROL_SetDeviceState(DS_Enabled);
@@ -228,7 +235,7 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 			break;
 
 		case ACT_STOP_PULSE:
-			if(CONTROL_State == DS_InProcess)
+			if(CONTROL_State == DS_InProcess && SELFTEST_SubState == STS_None)
 			{
 				LOGIC_StopProcess();
 				CONTROL_SetDeviceState(DS_SafetyActive);
@@ -341,7 +348,7 @@ void CONTROL_InitStoragePointers()
 }
 //------------------------------------------
 
-void CONTROL_HandleFrontPanelLamp()
+void CONTROL_HandleFrontPanelLamp(Boolean Forced)
 {
 	static Int64U FPLampCounter = 0;
 
@@ -353,15 +360,24 @@ void CONTROL_HandleFrontPanelLamp()
 			FPLampCounter = 0;
 		}
 	}
-	else if(CONTROL_State == DS_None)
+	else
 	{
-		LL_SetStateFPLed(false);
-		FPLampCounter = 0;
-	}
-	else if(CONTROL_State != DS_SafetyTrig)
-	{
-		if(CONTROL_TimeCounter >= FPLampCounter)
+		if(CONTROL_State == DS_None && FPLampCounter)
+		{
 			LL_SetStateFPLed(false);
+			FPLampCounter = 0;
+		}
+
+		if(CONTROL_State != DS_None && CONTROL_State != DS_SafetyTrig)
+		{
+			if(Forced)
+			{
+				LL_SetStateFPLed(true);
+				FPLampCounter = CONTROL_TimeCounter + TIME_FP_LED_ON_STATE;
+			}
+			else if(CONTROL_TimeCounter >= FPLampCounter)
+				LL_SetStateFPLed(false);
+		}
 	}
 }
 //-----------------------------------------------

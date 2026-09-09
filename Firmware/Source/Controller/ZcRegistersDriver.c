@@ -13,12 +13,14 @@ Int32U CycleCounters[ZCRD_RELAY_COUNTERS] = {0};
 static Int16U DriverMask[2] = {ZCRD_CS_IDLE, ZCRD_CS_IDLE};
 static Int16U ExpMask = 0;
 static Int16U PrevExpMask = 0;
+static Boolean PrevMuxOn[2] = {false, false};
 
 // Forward
 //
 static void ZcRD_Shift16(Int16U Mask);
 static void ZcRD_LatchDriver(ZcRD_DriverChannel Channel);
-static void ZcRD_UpdateRelayCounters(Int16U NewMask);
+static void ZcRD_UpdateExpRelayCounters(Int16U NewMask);
+static void ZcRD_UpdateMuxCounter(ZcRD_DriverChannel Channel, Int16U NewMask);
 
 // Functions
 //
@@ -42,6 +44,7 @@ static void ZcRD_LatchDriver(ZcRD_DriverChannel Channel)
 
 void ZcRD_WriteDriverMask(ZcRD_DriverChannel Channel, Int16U Mask)
 {
+	ZcRD_UpdateMuxCounter(Channel, Mask);
 	DriverMask[Channel] = Mask;
 	ZcRD_Shift16(Mask);
 	ZcRD_LatchDriver(Channel);
@@ -93,9 +96,12 @@ void ZcRD_DeselectDacs(ZcRD_DriverChannel Channel)
 }
 //-----------------------------------------------
 
-static void ZcRD_UpdateRelayCounters(Int16U NewMask)
+static void ZcRD_UpdateExpRelayCounters(Int16U NewMask)
 {
-	for(Int16U i = 0; i < ZCRD_RELAY_COUNTERS; ++i)
+	Int16U i;
+
+	// Только ST_Relay_* на EXP (биты 0..3); MUX учитывается в ZcRD_WriteDriverMask
+	for(i = 0; i < ZCRD_ST_RELAY_COUNT; ++i)
 	{
 		Int16U Bit = (Int16U)(1u << i);
 		if((NewMask & Bit) && !(PrevExpMask & Bit))
@@ -105,9 +111,20 @@ static void ZcRD_UpdateRelayCounters(Int16U NewMask)
 }
 //-----------------------------------------------
 
+static void ZcRD_UpdateMuxCounter(ZcRD_DriverChannel Channel, Int16U NewMask)
+{
+	Boolean MuxOn = (NewMask & ZCRD_BIT_MUX) != 0;
+
+	if(MuxOn && !PrevMuxOn[Channel])
+		CycleCounters[(Channel == ZcRD_DrvH) ? ZCRD_CNT_MUX_H : ZCRD_CNT_MUX_L]++;
+
+	PrevMuxOn[Channel] = MuxOn;
+}
+//-----------------------------------------------
+
 void ZcRD_WriteExpMask(Int16U Mask)
 {
-	ZcRD_UpdateRelayCounters(Mask);
+	ZcRD_UpdateExpRelayCounters(Mask);
 	ExpMask = Mask;
 
 	LL_SetOeExp(true);
@@ -142,6 +159,8 @@ void ZcRD_ResetAll()
 	DriverMask[ZcRD_DrvL] = ZCRD_CS_IDLE;
 	ExpMask = 0;
 	PrevExpMask = 0;
+	PrevMuxOn[ZcRD_DrvH] = false;
+	PrevMuxOn[ZcRD_DrvL] = false;
 
 	ZcRD_WriteDriverMask(ZcRD_DrvH, ZCRD_CS_IDLE);
 	ZcRD_WriteDriverMask(ZcRD_DrvL, ZCRD_CS_IDLE);
