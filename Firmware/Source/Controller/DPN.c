@@ -9,28 +9,9 @@
 #include "BCCIMHighLevel.h"
 #include "Controller.h"
 
-// Types
-//
-typedef enum __DPN_State
-{
-	DPNS_Idle = 0,
-
-	DPNS_CfgWriteVoltage,
-	DPNS_CfgWriteCurrent,
-	DPNS_CfgWritePosition,
-	DPNS_CfgWriteMaxDuration,
-	DPNS_CfgCall,
-	DPNS_CfgWaitReady,
-	DPNS_CfgReadInductance,
-	DPNS_CfgReadDuration,
-
-	DPNS_StopCall,
-	DPNS_StopWait
-} DPN_State;
-
 // Variables
 //
-static DPN_State FsmState = DPNS_Idle;
+DPNSubState DPN_SubState = DPNS_Idle;
 static DPN_FsmResult FsmResult = DPN_FR_None;
 static Int64U WaitDeadline = 0;
 static Int64U NextPollTime = 0;
@@ -43,7 +24,7 @@ static void DPN_FsmFailDevice();
 static void DPN_FsmFailTimeout();
 static void DPN_FsmFailProblem();
 static void DPN_FsmSucceed();
-static Boolean DPN_FsmStart(DPN_State FirstState);
+static Boolean DPN_FsmStart(DPNSubState FirstState);
 static Boolean DPN_PollReadyAfterCommand(Boolean *OutReady);
 
 // Functions
@@ -239,16 +220,10 @@ bool DPN_ReadRegisterFloat(Int16U RegAddress, float* RegData)
 
 void DPN_ResetFsm()
 {
-	FsmState = DPNS_Idle;
+	DPN_SubState = DPNS_Idle;
 	FsmResult = DPN_FR_None;
 	WaitDeadline = 0;
 	NextPollTime = 0;
-}
-//--------------------------------------
-
-Boolean DPN_IsBusy()
-{
-	return (FsmState != DPNS_Idle);
 }
 //--------------------------------------
 
@@ -258,13 +233,13 @@ DPN_FsmResult DPN_GetFsmResult()
 }
 //--------------------------------------
 
-static Boolean DPN_FsmStart(DPN_State FirstState)
+static Boolean DPN_FsmStart(DPNSubState FirstState)
 {
-	if(FsmState != DPNS_Idle)
+	if(DPN_SubState != DPNS_Idle)
 		return false;
 
 	FsmResult = DPN_FR_Busy;
-	FsmState = FirstState;
+	DPN_SubState = FirstState;
 	WaitDeadline = 0;
 	NextPollTime = 0;
 	return true;
@@ -285,7 +260,7 @@ Boolean DPN_RequestStop()
 
 static void DPN_FsmSucceed()
 {
-	FsmState = DPNS_Idle;
+	DPN_SubState = DPNS_Idle;
 	FsmResult = DPN_FR_Ok;
 }
 //--------------------------------------
@@ -313,7 +288,7 @@ static void DPN_FsmFailTimeout()
 
 static void DPN_FsmFailProblem()
 {
-	FsmState = DPNS_Idle;
+	DPN_SubState = DPNS_Idle;
 	FsmResult = DPN_FR_Fail;
 }
 //--------------------------------------
@@ -359,47 +334,47 @@ void DPN_Process()
 	Boolean Ready = false;
 	float Value = 0;
 
-	switch(FsmState)
+	switch(DPN_SubState)
 	{
 		case DPNS_Idle:
 			break;
 
 		case DPNS_CfgWriteVoltage:
 			if(DPN_WriteRegFloat(REG_DPN_VOLTAGE, DataTable[REG_TEST_VOLTAGE]))
-				FsmState = DPNS_CfgWriteCurrent;
+				DPN_SubState = DPNS_CfgWriteCurrent;
 			else
 			{
-				FsmState = DPNS_Idle;
+				DPN_SubState = DPNS_Idle;
 				FsmResult = DPN_FR_Fail;
 			}
 			break;
 
 		case DPNS_CfgWriteCurrent:
 			if(DPN_WriteRegFloat(REG_DPN_CURRENT, DataTable[REG_TEST_CURRENT]))
-				FsmState = DPNS_CfgWritePosition;
+				DPN_SubState = DPNS_CfgWritePosition;
 			else
 			{
-				FsmState = DPNS_Idle;
+				DPN_SubState = DPNS_Idle;
 				FsmResult = DPN_FR_Fail;
 			}
 			break;
 
 		case DPNS_CfgWritePosition:
 			if(DPN_WriteReg(REG_DPN_DUT_POSITION, (Int16U)DataTable[REG_TEST_POS]))
-				FsmState = DPNS_CfgWriteMaxDuration;
+				DPN_SubState = DPNS_CfgWriteMaxDuration;
 			else
 			{
-				FsmState = DPNS_Idle;
+				DPN_SubState = DPNS_Idle;
 				FsmResult = DPN_FR_Fail;
 			}
 			break;
 
 		case DPNS_CfgWriteMaxDuration:
 			if(DPN_WriteRegFloat(REG_DPN_MAX_DURATION, DataTable[REG_TEST_SECOND_PULSE] * 1000.0f))
-				FsmState = DPNS_CfgCall;
+				DPN_SubState = DPNS_CfgCall;
 			else
 			{
-				FsmState = DPNS_Idle;
+				DPN_SubState = DPNS_Idle;
 				FsmResult = DPN_FR_Fail;
 			}
 			break;
@@ -409,11 +384,11 @@ void DPN_Process()
 			{
 				WaitDeadline = CONTROL_TimeCounter + DPN_WAIT_MS;
 				NextPollTime = 0;
-				FsmState = DPNS_CfgWaitReady;
+				DPN_SubState = DPNS_CfgWaitReady;
 			}
 			else
 			{
-				FsmState = DPNS_Idle;
+				DPN_SubState = DPNS_Idle;
 				FsmResult = DPN_FR_Fail;
 			}
 			break;
@@ -431,7 +406,7 @@ void DPN_Process()
 			if(Ready)
 			{
 				if(DataTable[REG_DPN_EMULATED] || DPN_CheckOPResult(OPRESULT_OK))
-					FsmState = DPNS_CfgReadInductance;
+					DPN_SubState = DPNS_CfgReadInductance;
 				else
 					DPN_FsmFailProblem();
 			}
@@ -441,16 +416,16 @@ void DPN_Process()
 			if(DataTable[REG_DPN_EMULATED])
 			{
 				DataTable[REG_SELECTED_INDUCTANCE] = 0;
-				FsmState = DPNS_CfgReadDuration;
+				DPN_SubState = DPNS_CfgReadDuration;
 			}
 			else if(DPN_ReadRegisterFloat(REG_DPN_INDUCTANCE, &Value))
 			{
 				DataTable[REG_SELECTED_INDUCTANCE] = Value;
-				FsmState = DPNS_CfgReadDuration;
+				DPN_SubState = DPNS_CfgReadDuration;
 			}
 			else
 			{
-				FsmState = DPNS_Idle;
+				DPN_SubState = DPNS_Idle;
 				FsmResult = DPN_FR_Fail;
 			}
 			break;
@@ -468,7 +443,7 @@ void DPN_Process()
 			}
 			else
 			{
-				FsmState = DPNS_Idle;
+				DPN_SubState = DPNS_Idle;
 				FsmResult = DPN_FR_Fail;
 			}
 			break;
@@ -478,11 +453,11 @@ void DPN_Process()
 			{
 				WaitDeadline = CONTROL_TimeCounter + DPN_WAIT_MS;
 				NextPollTime = 0;
-				FsmState = DPNS_StopWait;
+				DPN_SubState = DPNS_StopWait;
 			}
 			else
 			{
-				FsmState = DPNS_Idle;
+				DPN_SubState = DPNS_Idle;
 				FsmResult = DPN_FR_Fail;
 			}
 			break;

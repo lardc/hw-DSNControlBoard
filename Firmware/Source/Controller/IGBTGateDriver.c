@@ -9,14 +9,14 @@
 #include "math.h"
 
 // Variables
-static const float IGBTGD_Rbits[8] = {200.0f, 100.0f, 51.0f, 24.0f, 12.0f, 6.2f, 3.0f, 1.5f}; // Сопротивления Rg Ом
+const float IGBTGD_RgBitOhm[IGBTGD_RG_BIT_COUNT] = {200.0f, 100.0f, 51.0f, 24.0f, 12.0f, 6.2f, 3.0f, 1.5f};
 static const float IGBTGD_Rs = 15.0f;
 
 // Forward
 //
 static float IGBTGD_CodeToResistance(Int8U Code);
 static Int8U IGBTGD_BlockedBits(Int8U Code);
-static Int16U IGBTGD_ComposeBase(Int8U RgCode, bool MuxOn, bool FaultLed);
+static Int16U IGBTGD_ComposeBase(Int8U RgCode, bool ToSwitchBoard, bool FaultLed);
 static float IGBTGD_GetOpenK(IGBTGD_Channel Channel);
 static float IGBTGD_GetCloseK(IGBTGD_Channel Channel);
 static void IGBTGD_ApplyBase(IGBTGD_Channel Channel, Int16U Base);
@@ -42,10 +42,10 @@ static float IGBTGD_CodeToResistance(Int8U Code)
 	float Conductance = 1.0f / IGBTGD_Rs;
 	Int8U i;
 
-	for(i = 0; i < 8; ++i)
+	for(i = 0; i < IGBTGD_RG_BIT_COUNT; ++i)
 	{
 		if(Code & (1u << i))
-			Conductance += 1.0f / IGBTGD_Rbits[i];
+			Conductance += 1.0f / IGBTGD_RgBitOhm[i];
 	}
 
 	return 1.0f / Conductance;
@@ -112,11 +112,11 @@ static float IGBTGD_GetCloseK(IGBTGD_Channel Channel)
 }
 //-----------------------------------------------
 
-static Int16U IGBTGD_ComposeBase(Int8U RgCode, bool MuxOn, bool FaultLed)
+static Int16U IGBTGD_ComposeBase(Int8U RgCode, bool ToSwitchBoard, bool FaultLed)
 {
 	Int16U Mask = (Int16U)RgCode | ZCRD_CS_IDLE;
 
-	if(MuxOn)
+	if(ToSwitchBoard)
 		Mask |= ZCRD_BIT_MUX;
 	if(FaultLed)
 		Mask |= ZCRD_BIT_FAULT_LED;
@@ -187,10 +187,10 @@ void IGBTGD_SetFaultLed(IGBTGD_Channel Channel, bool On)
 //-----------------------------------------------
 
 void IGBTGD_Configure(IGBTGD_Channel Channel, float OpenV, float CloseV, float RgOhm,
-		bool MuxOn, bool FaultLed)
+		bool ToSwitchBoard, bool FaultLed)
 {
 	Int8U RgCode = IGBTGD_FindRgCode(RgOhm);
-	Int16U Base = IGBTGD_ComposeBase(RgCode, MuxOn, FaultLed);
+	Int16U Base = IGBTGD_ComposeBase(RgCode, ToSwitchBoard, FaultLed);
 
 	IGBTGD_ApplyBase(Channel, Base);
 	IGBTGD_SetVoltages(Channel, OpenV, CloseV);

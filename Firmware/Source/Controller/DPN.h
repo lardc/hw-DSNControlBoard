@@ -24,6 +24,24 @@ typedef enum __DPNState
 	DPN_InSelfTest		= 6
 } DPNState;
 
+// Состояния локальной FSM мастера DPN
+typedef enum __DPNSubState
+{
+	DPNS_Idle = 0,
+
+	DPNS_CfgWriteVoltage,
+	DPNS_CfgWriteCurrent,
+	DPNS_CfgWritePosition,
+	DPNS_CfgWriteMaxDuration,
+	DPNS_CfgCall,
+	DPNS_CfgWaitReady,
+	DPNS_CfgReadInductance,
+	DPNS_CfgReadDuration,
+
+	DPNS_StopCall,
+	DPNS_StopWait
+} DPNSubState;
+
 // Результат последней асинхронной операции FSM
 typedef enum __DPN_FsmResult
 {
@@ -32,6 +50,8 @@ typedef enum __DPN_FsmResult
 	DPN_FR_Ok			= 2,
 	DPN_FR_Fail			= 3
 } DPN_FsmResult;
+
+extern DPNSubState DPN_SubState;
 
 // Functions
 //
@@ -54,7 +74,6 @@ bool DPN_ReadRegisterFloat(Int16U RegAddress, float* RegData);
 
 // Асинхронная FSM (один шаг CAN за вызов DPN_Process)
 void DPN_Process();
-Boolean DPN_IsBusy();
 DPN_FsmResult DPN_GetFsmResult();
 void DPN_ResetFsm();
 

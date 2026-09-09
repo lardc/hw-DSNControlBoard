@@ -31,6 +31,10 @@ typedef enum __ZcRD_DriverChannel
 
 // Счётчики ресурса: 6 реле на EXP (биты 0..5 — заглушка раскладки до сверки со схемой)
 #define ZCRD_RELAY_COUNTERS		6
+#define ZCRD_ST_RELAY_H_BIT		(1u << 0)
+#define ZCRD_ST_RELAY_L_BIT		(1u << 1)
+#define ZCRD_ST_RELAY_HE_BIT	(1u << 2)
+#define ZCRD_ST_RELAY_LE_BIT	(1u << 3)
 
 extern Int32U CycleCounters[ZCRD_RELAY_COUNTERS];
 
@@ -52,6 +56,7 @@ void ZcRD_DeselectDacs(ZcRD_DriverChannel Channel);
 // SR расширения портов 
 void ZcRD_WriteExpMask(Int16U Mask);
 Int16U ZcRD_GetExpMask();
+void ZcRD_SetExpBit(Int16U Bit, Boolean On);
 
 // Обнуление масок драйверов и EXP
 void ZcRD_ResetAll();

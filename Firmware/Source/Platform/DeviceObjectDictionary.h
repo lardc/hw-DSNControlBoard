@@ -53,6 +53,20 @@
 #define REG_TEMP_COOLING						9	// Порог включения FAN, °C
 #define REG_ADC_DIAG_K							10	// К АЦП диагностики силовых линий
 #define REG_ADC_DIAG_OFFSET						11	// Смещение АЦП диагностики
+#define REG_ST_OPEN_V							12	// SelfTest: отпирающее напряжение, В
+#define REG_ST_CLOSE_V							13	// SelfTest: запирающее напряжение, В
+#define REG_ST_CHARGE_TIME						14	// SelfTest: пауза заряда конденсаторов, мс
+#define REG_ST_CAPTURE_TIMEOUT					15	// SelfTest: таймаут capture SelfTestResult, мс
+#define REG_ST_PULSE_MAX_DURATION				16	// SelfTest: макс. длительность импульса SelfTestResult, мкс
+#define REG_ST_RG_DURATION_TOL					17	// SelfTest: допуск сравнения длительности Rg, мкс
+#define REG_ST_RG_0_DURATION					18	// SelfTest: длительность для Rg bit0, мкс
+#define REG_ST_RG_1_DURATION					19	// SelfTest: длительность для Rg bit1, мкс
+#define REG_ST_RG_2_DURATION					20	// SelfTest: длительность для Rg bit2, мкс
+#define REG_ST_RG_3_DURATION					21	// SelfTest: длительность для Rg bit3, мкс
+#define REG_ST_RG_4_DURATION					22	// SelfTest: длительность для Rg bit4, мкс
+#define REG_ST_RG_5_DURATION					23	// SelfTest: длительность для Rg bit5, мкс
+#define REG_ST_RG_6_DURATION					24	// SelfTest: длительность для Rg bit6, мкс
+#define REG_ST_RG_7_DURATION					25	// SelfTest: длительность для Rg bit7, мкс
 //
 #define REG_CNT_NUMBER							104	// Номер счетчика, в который будет записано значение из регистра 105
 #define REG_CNT_VALUE							105	// Значение, которое будет записано в счетчик

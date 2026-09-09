@@ -122,6 +122,20 @@ Int16U ZcRD_GetExpMask()
 }
 //-----------------------------------------------
 
+void ZcRD_SetExpBit(Int16U Bit, Boolean On)
+{
+	Int16U Mask = ExpMask;
+
+	if(On)
+		Mask |= Bit;
+	else
+		Mask &= ~Bit;
+
+	ZcRD_WriteExpMask(Mask);
+	DELAY_MS(COMM_DELAY_MS);
+}
+//-----------------------------------------------
+
 void ZcRD_ResetAll()
 {
 	DriverMask[ZcRD_DrvH] = ZCRD_CS_IDLE;

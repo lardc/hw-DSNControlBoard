@@ -11,6 +11,21 @@
 #define LOGIC_REQ_GATE_DRIVERS		2
 #define LOGIC_MAX_SWITCH_BOARDS		2
 
+typedef enum __LogicSubState
+{
+	SS_Idle = 0,
+
+	SS_CfgScan,
+	SS_CfgValidate,
+	SS_CfgDpnStart,
+	SS_CfgDpnWait,
+	SS_CfgDrivers,
+
+	SS_PulseT1,
+	SS_PulsePause,
+	SS_PulseT2
+} LogicSubState;
+
 typedef struct __LogicProbeInfo
 {
 	Int8U Ds2431Index;
@@ -33,6 +48,7 @@ typedef struct __LogicAdapterState
 } LogicAdapterState;
 
 extern LogicAdapterState LOGIC_Adapter;
+extern LogicSubState LOGIC_SubState;
 
 void LOGIC_Process();
 
@@ -53,6 +69,5 @@ void LOGIC_Deactivate();
 void LOGIC_Reset();
 
 Boolean LOGIC_IsConfigured();
-Boolean LOGIC_IsBusy();
 
 #endif // __LOGIC_H

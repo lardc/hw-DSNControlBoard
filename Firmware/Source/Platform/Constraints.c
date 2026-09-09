@@ -14,27 +14,27 @@ const TableItemConstraint Constraint[DATA_TABLE_WP_START] = {
 		{NO, YES, YES},																// 2
 		{0, INT16U_MAX, DPN_CAN_ID_DEF},											// 3
 		{NO, YES, NO},																// 4
-		{0, REG_DRV_K_MAX, REG_DRV_K_DFLT},											// 5
-		{0, REG_DRV_K_MAX, REG_DRV_K_DFLT},											// 6
-		{0, REG_DRV_K_MAX, REG_DRV_K_DFLT},											// 7
-		{0, REG_DRV_K_MAX, REG_DRV_K_DFLT},											// 8
-		{REG_TEMP_COOLING_MIN, REG_TEMP_COOLING_MAX, REG_TEMP_COOLING_DFLT},		// 9
-		{0, REG_ADC_DIAG_K_MAX, REG_ADC_DIAG_K_DFLT},								// 10 
-		{REG_ADC_DIAG_OFFSET_MIN, REG_ADC_DIAG_OFFSET_MAX, 0},						// 11
-		{0, 0, 0},																	// 12
-		{0, 0, 0},																	// 13
-		{0, 0, 0},																	// 14
-		{0, 0, 0},																	// 15
-		{0, 0, 0},																	// 16
-		{0, 0, 0},																	// 17
-		{0, 0, 0},																	// 18
-		{0, 0, 0},																	// 19
-		{0, 0, 0},																	// 20
-		{0, 0, 0},																	// 21
-		{0, 0, 0},																	// 22
-		{0, 0, 0},																	// 23
-		{0, 0, 0},																	// 24
-		{0, 0, 0},																	// 25
+		{0, DRV_K_MAX, DRV_K_DEF},													// 5
+		{0, DRV_K_MAX, DRV_K_DEF},													// 6
+		{0, DRV_K_MAX, DRV_K_DEF},													// 7
+		{0, DRV_K_MAX, DRV_K_DEF},													// 8
+		{TEMP_COOLING_MIN, TEMP_COOLING_MAX, TEMP_COOLING_DEF},						// 9
+		{0, ADC_DIAG_K_MAX, ADC_DIAG_K_DEF},										// 10
+		{ADC_DIAG_OFFSET_MIN, ADC_DIAG_OFFSET_MAX, 0},								// 11
+		{-ST_OPEN_V_MAX, ST_OPEN_V_MAX, ST_OPEN_V_DEF},								// 12 
+		{-ST_OPEN_V_MAX, ST_OPEN_V_MAX, ST_CLOSE_V_DEF},							// 13
+		{0, ST_DURATION_MAX, ST_CHARGE_TIME_DEF},									// 14
+		{0, ST_DURATION_MAX, ST_CAPTURE_TIMEOUT_DEF},								// 15
+		{0, ST_DURATION_MAX, ST_PULSE_MAX_DURATION_DEF},							// 16
+		{0, ST_DURATION_MAX, ST_RG_DURATION_TOL_DEF},								// 17
+		{0, ST_DURATION_MAX, ST_RG_0_DURATION_DEF},									// 18
+		{0, ST_DURATION_MAX, ST_RG_1_DURATION_DEF},									// 19
+		{0, ST_DURATION_MAX, ST_RG_2_DURATION_DEF},									// 20
+		{0, ST_DURATION_MAX, ST_RG_3_DURATION_DEF},									// 21
+		{0, ST_DURATION_MAX, ST_RG_4_DURATION_DEF},									// 22
+		{0, ST_DURATION_MAX, ST_RG_5_DURATION_DEF},									// 23
+		{0, ST_DURATION_MAX, ST_RG_6_DURATION_DEF},									// 24
+		{0, ST_DURATION_MAX, ST_RG_7_DURATION_DEF},									// 25
 		{0, 0, 0},																	// 26
 		{0, 0, 0},																	// 27
 		{0, 0, 0},																	// 28
@@ -137,16 +137,16 @@ const TableItemConstraint Constraint[DATA_TABLE_WP_START] = {
 		{0, 0, 0},																	// 125
 		{0, 0, 0},																	// 126
 		{0, 0, 0},																	// 127
-		{0, REG_TEST_VOLTAGE_MAX, 0},												// 128
-		{0, REG_TEST_CURRENT_MAX, 0},												// 129
+		{0, TEST_VOLTAGE_MAX, 0},													// 128
+		{0, TEST_CURRENT_MAX, 0},													// 129
 		{TEST_POS_H, TEST_POS_L, TEST_POS_H},										// 130
 		{SCHEME_SD, SCHEME_DD, SCHEME_HB},											// 131
-		{0, REG_TEST_PULSE_MS_MAX, 0},												// 132
-		{0, REG_TEST_PULSE_MS_MAX, 0},												// 133
-		{-REG_GATE_V_MAX, REG_GATE_V_MAX, REG_GATE_OPEN_V_DFLT},					// 134
-		{-REG_GATE_V_MAX, REG_GATE_V_MAX, REG_GATE_CLOSE_V_DFLT},					// 135
-		{0, REG_GATE_RG_MAX, REG_GATE_RG_DFLT},										// 136
-		{0, REG_GATE_RG_MAX, REG_GATE_RG_DFLT},										// 137
+		{0, TEST_PULSE_MS_MAX, 0},													// 132
+		{0, TEST_PULSE_MS_MAX, 0},													// 133
+		{-GATE_V_MAX, GATE_V_MAX, GATE_OPEN_V_DEF},									// 134
+		{-GATE_V_MAX, GATE_V_MAX, GATE_CLOSE_V_DEF},								// 135
+		{0, GATE_RG_MAX, GATE_RG_DEF},												// 136
+		{0, GATE_RG_MAX, GATE_RG_DEF},												// 137
 		{0, 0, 0},																	// 138
 		{0, 0, 0},																	// 139
 		{0, 0, 0},																	// 140

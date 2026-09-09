@@ -13,6 +13,7 @@
 #include "ZcRegistersDriver.h"
 #include "DPN.h"
 #include "Logic.h"
+#include "SelfTest.h"
 #include "BCCIMHighLevel.h"
 #include "SaveToFlash.h"
 #include "DeviceObjectDictionary.h"
@@ -90,6 +91,7 @@ void CONTROL_SwitchToFault(Int16U Reason)
 
 	DPN_ResetFsm();
 	LOGIC_Reset();
+	SELFTEST_Stop();
 	CONTROL_ResetOutputRegisters();
 
 	CONTROL_SetDeviceState(DS_Fault);
@@ -124,7 +126,7 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 		case ACT_ENABLE_POWER:
 			if(CONTROL_State == DS_None)
 			{
-				if(DPN_IsBusy() || LOGIC_IsBusy())
+				if(DPN_SubState != DPNS_Idle || LOGIC_SubState != SS_Idle || SELFTEST_SubState != STS_None)
 					*pUserError = ERR_DEVICE_NOT_READY;
 				else if(DPN_Enable())
 					CONTROL_SetDeviceState(DS_Enabled);
@@ -136,7 +138,7 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 		case ACT_DISABLE_POWER:
 			if(CONTROL_State == DS_Enabled || CONTROL_State == DS_SafetyActive)
 			{
-				if(DPN_IsBusy() || LOGIC_IsBusy())
+				if(DPN_SubState != DPNS_Idle || LOGIC_SubState != SS_Idle || SELFTEST_SubState != STS_None)
 					*pUserError = ERR_DEVICE_NOT_READY;
 				else
 				{
@@ -151,11 +153,8 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 		case ACT_CLR_FAULT:
 			if (CONTROL_State == DS_Fault)
 			{
-				if(DPN_IsBusy() || LOGIC_IsBusy())
-					*pUserError = ERR_DEVICE_NOT_READY;
-				else if(DPN_ClearFault())
+				if(DPN_ClearFault())
 				{
-					LOGIC_Deactivate();
 					CONTROL_SetDeviceState(DS_None);
 					DataTable[REG_FAULT_REASON] = DF_NONE;
 				}
@@ -216,6 +215,18 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 			{
 				LOGIC_StopProcess();
 				CONTROL_SetDeviceState(DS_SafetyActive);
+			}
+			else
+				*pUserError = ERR_OPERATION_BLOCKED;
+			break;
+
+		case ACT_SELF_TEST:
+			if(CONTROL_State == DS_Enabled || CONTROL_State == DS_SafetyActive)
+			{
+				if(LOGIC_SubState != SS_Idle || DPN_SubState != DPNS_Idle || SELFTEST_SubState != STS_None)
+					*pUserError = ERR_DEVICE_NOT_READY;
+				else
+					SELFTEST_Start();
 			}
 			else
 				*pUserError = ERR_OPERATION_BLOCKED;

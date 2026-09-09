@@ -13,28 +13,12 @@
 #include "LowLevel.h"
 #include "Global.h"
 #include "Board.h"
-
-// Types
-//
-typedef enum __SubState
-{
-	SS_Idle = 0,
-
-	SS_CfgScan,
-	SS_CfgValidate,
-	SS_CfgDpnStart,
-	SS_CfgDpnWait,
-	SS_CfgDrivers,
-
-	SS_PulseT1,
-	SS_PulsePause,
-	SS_PulseT2
-} SubState;
+#include "SelfTest.h"
 
 // Variables
 //
 LogicAdapterState LOGIC_Adapter = {0};
-static SubState CurrentSubState = SS_Idle;
+LogicSubState LOGIC_SubState = SS_Idle;
 static Boolean Configured = false;
 static Int64U CoolingDeadline = 0;
 static Int64U Timeout = 0;
@@ -56,7 +40,7 @@ static Int8U LOGIC_RequiredSwitchBoards(Int16U Scheme);
 static void LOGIC_ApplyDrivers();
 static void LOGIC_SetGateCtrl(Boolean On);
 static Boolean LOGIC_PulseSafetyFault();
-static Boolean LOGIC_IsPulseSubState(SubState State);
+static Boolean LOGIC_IsPulseSubState(LogicSubState State);
 
 // Functions
 //
@@ -144,7 +128,7 @@ static void LOGIC_SetSubState(Int16U Value)
 
 static void LOGIC_FinishOk()
 {
-	CurrentSubState = SS_Idle;
+	LOGIC_SubState = SS_Idle;
 	LOGIC_SetSubState(SS_Idle);
 	DataTable[REG_OP_RESULT] = OPRESULT_OK;
 	DataTable[REG_PROBLEM] = PROBLEM_NONE;
@@ -154,7 +138,7 @@ static void LOGIC_FinishOk()
 
 static void LOGIC_FinishProblem(Int16U Problem)
 {
-	CurrentSubState = SS_Idle;
+	LOGIC_SubState = SS_Idle;
 	LOGIC_SetSubState(SS_Idle);
 	CONTROL_FinishedWithProblem(Problem);
 	CONTROL_SetDeviceState(StateAfterOp);
@@ -223,24 +207,24 @@ static void LOGIC_ApplyDrivers()
 {
 	Int16U Scheme = (Int16U)DataTable[REG_TEST_SCHEME];
 	Int16U Pos = (Int16U)DataTable[REG_TEST_POS];
-	Boolean MuxH = false;
-	Boolean MuxL = false;
+	Boolean ToSwitchBoardH = false;
+	Boolean ToSwitchBoardL = false;
 	float OpenV = DataTable[REG_GATE_OPEN_V];
 	float CloseV = DataTable[REG_GATE_CLOSE_V];
 
 	switch(Scheme)
 	{
 		case SCHEME_HC:
-			MuxL = true;
+			ToSwitchBoardL = true;
 			break;
 		case SCHEME_LC:
-			MuxH = true;
+			ToSwitchBoardH = true;
 			break;
 		case SCHEME_SD:
 			if(Pos == TEST_POS_H)
-				MuxL = true;
+				ToSwitchBoardL = true;
 			else
-				MuxH = true;
+				ToSwitchBoardH = true;
 			break;
 		case SCHEME_HB:
 		case SCHEME_DD:
@@ -248,8 +232,8 @@ static void LOGIC_ApplyDrivers()
 			break;
 	}
 
-	IGBTGD_Configure(IGBTGD_CH_H, OpenV, CloseV, DataTable[REG_GATE_RG_H], MuxH, false);
-	IGBTGD_Configure(IGBTGD_CH_L, OpenV, CloseV, DataTable[REG_GATE_RG_L], MuxL, false);
+	IGBTGD_Configure(IGBTGD_CH_H, OpenV, CloseV, DataTable[REG_GATE_RG_H], ToSwitchBoardH, false);
+	IGBTGD_Configure(IGBTGD_CH_L, OpenV, CloseV, DataTable[REG_GATE_RG_L], ToSwitchBoardL, false);
 }
 //-----------------------------------------------
 
@@ -270,7 +254,7 @@ static void LOGIC_SetGateCtrl(Boolean On)
 }
 //-----------------------------------------------
 
-static Boolean LOGIC_IsPulseSubState(SubState State)
+static Boolean LOGIC_IsPulseSubState(LogicSubState State)
 {
 	return (State == SS_PulseT1 || State == SS_PulsePause || State == SS_PulseT2);
 }
@@ -310,7 +294,7 @@ static void LOGIC_ProcessCooling()
 
 static void LOGIC_ProcessOp()
 {
-	switch(CurrentSubState)
+	switch(LOGIC_SubState)
 	{
 		case SS_Idle:
 			break;
@@ -327,38 +311,38 @@ static void LOGIC_ProcessOp()
 					LOGIC_FinishProblem(PROBLEM_OW_INVENTORY);
 			}
 			else
-				CurrentSubState = SS_CfgValidate;
+				LOGIC_SubState = SS_CfgValidate;
 			break;
 
 		case SS_CfgValidate:
 			LOGIC_SetSubState(SS_CfgValidate);
 			if(LOGIC_ValidateAdapterForTest())
-				CurrentSubState = SS_CfgDpnStart;
+				LOGIC_SubState = SS_CfgDpnStart;
 			break;
 
 		case SS_CfgDpnStart:
 			LOGIC_SetSubState(SS_CfgDpnStart);
-			if(DPN_IsBusy())
+			if((DPN_SubState != DPNS_Idle))
 				break;
 			if(!DPN_RequestConfig())
 				LOGIC_FinishProblem(PROBLEM_DPN_NOT_READY);
 			else
-				CurrentSubState = SS_CfgDpnWait;
+				LOGIC_SubState = SS_CfgDpnWait;
 			break;
 
 		case SS_CfgDpnWait:
 			LOGIC_SetSubState(SS_CfgDpnWait);
-			if(DPN_IsBusy())
+			if((DPN_SubState != DPNS_Idle))
 				break;
 
 			switch(DPN_GetFsmResult())
 			{
 				case DPN_FR_Ok:
-					CurrentSubState = SS_CfgDrivers;
+					LOGIC_SubState = SS_CfgDrivers;
 					break;
 				case DPN_FR_Fail:
 					Configured = false;
-					CurrentSubState = SS_Idle;
+					LOGIC_SubState = SS_Idle;
 					LOGIC_SetSubState(SS_Idle);
 					if(CONTROL_State != DS_Fault)
 						CONTROL_SetDeviceState(StateAfterOp);
@@ -384,7 +368,7 @@ static void LOGIC_ProcessOp()
 			{
 				LOGIC_SetGateCtrl(false);
 				Timeout = CONTROL_TimeCounter + (Int32U)DataTable[REG_TEST_PULSE_PAUSE];
-				CurrentSubState = SS_PulsePause;
+				LOGIC_SubState = SS_PulsePause;
 			}
 			break;
 
@@ -396,7 +380,7 @@ static void LOGIC_ProcessOp()
 			{
 				LOGIC_SetGateCtrl(true);
 				Timeout = CONTROL_TimeCounter + (Int32U)DataTable[REG_TEST_SECOND_PULSE];
-				CurrentSubState = SS_PulseT2;
+				LOGIC_SubState = SS_PulseT2;
 			}
 			break;
 
@@ -412,7 +396,7 @@ static void LOGIC_ProcessOp()
 			break;
 
 		default:
-			CurrentSubState = SS_Idle;
+			LOGIC_SubState = SS_Idle;
 			break;
 	}
 }
@@ -422,6 +406,7 @@ void LOGIC_Process()
 {
 	LOGIC_ProcessCooling();
 	DPN_Process();
+	SELFTEST_Process();
 	LOGIC_ProcessOp();
 }
 //-----------------------------------------------
@@ -538,15 +523,9 @@ Boolean LOGIC_IsConfigured()
 }
 //-----------------------------------------------
 
-Boolean LOGIC_IsBusy()
-{
-	return (CurrentSubState != SS_Idle);
-}
-//-----------------------------------------------
-
 Boolean LOGIC_Configure()
 {
-	if(CurrentSubState != SS_Idle || DPN_IsBusy())
+	if(LOGIC_SubState != SS_Idle || (DPN_SubState != DPNS_Idle))
 		return false;
 
 	Configured = false;
@@ -554,14 +533,14 @@ Boolean LOGIC_Configure()
 	DataTable[REG_PROBLEM] = PROBLEM_NONE;
 	StateAfterOp = DS_SafetyActive;
 	CONTROL_SetDeviceState(DS_InProcess);
-	CurrentSubState = SS_CfgScan;
+	LOGIC_SubState = SS_CfgScan;
 	return true;
 }
 //-----------------------------------------------
 
 Boolean LOGIC_StartPulse()
 {
-	if(CurrentSubState != SS_Idle || !Configured)
+	if(LOGIC_SubState != SS_Idle || !Configured)
 		return false;
 
 	if(CONTROL_State != DS_SafetyActive)
@@ -575,7 +554,7 @@ Boolean LOGIC_StartPulse()
 	LL_SetScopeSync(true);
 	LOGIC_SetGateCtrl(true);
 	Timeout = CONTROL_TimeCounter + (Int32U)DataTable[REG_SELECTED_PULSE_WIDTH];
-	CurrentSubState = SS_PulseT1;
+	LOGIC_SubState = SS_PulseT1;
 	LOGIC_SetSubState(SS_PulseT1);
 	return true;
 }
@@ -587,12 +566,12 @@ void LOGIC_StopProcess()
 	LL_SetGateCtrlL(false);
 	LL_SetScopeSync(false);
 
-	if(LOGIC_IsPulseSubState(CurrentSubState)
-			|| CurrentSubState == SS_CfgScan || CurrentSubState == SS_CfgValidate
-			|| CurrentSubState == SS_CfgDpnStart || CurrentSubState == SS_CfgDpnWait
-			|| CurrentSubState == SS_CfgDrivers)
+	if(LOGIC_IsPulseSubState(LOGIC_SubState)
+			|| LOGIC_SubState == SS_CfgScan || LOGIC_SubState == SS_CfgValidate
+			|| LOGIC_SubState == SS_CfgDpnStart || LOGIC_SubState == SS_CfgDpnWait
+			|| LOGIC_SubState == SS_CfgDrivers)
 	{
-		CurrentSubState = SS_Idle;
+		LOGIC_SubState = SS_Idle;
 		LOGIC_SetSubState(SS_Idle);
 	}
 }
@@ -601,7 +580,7 @@ void LOGIC_StopProcess()
 void LOGIC_Reset()
 {
 	LOGIC_StopProcess();
-	CurrentSubState = SS_Idle;
+	LOGIC_SubState = SS_Idle;
 	Configured = false;
 	LOGIC_SetSubState(SS_Idle);
 }
@@ -613,9 +592,9 @@ void LOGIC_Deactivate()
 	Configured = false;
 	IGBTGD_ResetAll();
 	LOGIC_SetSubState(SS_Idle);
-	CurrentSubState = SS_Idle;
+	LOGIC_SubState = SS_Idle;
 
-	if(DPN_IsBusy())
+	if((DPN_SubState != DPNS_Idle))
 		DPN_ResetFsm();
 
 	DPN_RequestStop();

@@ -13,6 +13,9 @@ typedef ZcRD_DriverChannel IGBTGD_Channel;
 #define IGBTGD_CH_H		ZcRD_DrvH
 #define IGBTGD_CH_L		ZcRD_DrvL
 
+#define IGBTGD_RG_BIT_COUNT		8
+extern const float IGBTGD_RgBitOhm[IGBTGD_RG_BIT_COUNT];	// Сопротивления параллельных Rg, Ом
+
 // Коды схемы включения
 #define SCHEME_SD								17	// Single diode
 #define SCHEME_HB								18	// Half-bridge
@@ -42,7 +45,7 @@ void IGBTGD_SetFaultLed(IGBTGD_Channel Channel, bool On);
 
 // Полная конфигурация канала
 void IGBTGD_Configure(IGBTGD_Channel Channel, float OpenV, float CloseV, float RgOhm,
-		bool MuxOn, bool FaultLed);
+		bool ToSwitchBoard, bool FaultLed);
 
 // Сброс ЦАП и SR канала / обоих
 void IGBTGD_Reset(IGBTGD_Channel Channel);
