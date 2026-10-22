@@ -12,6 +12,8 @@
 #include "BCCIxParams.h"
 #include "ZcRegistersDriver.h"
 #include "DPN.h"
+#include "Logic.h"
+#include "SelfTest.h"
 #include "BCCIMHighLevel.h"
 #include "SaveToFlash.h"
 #include "DeviceObjectDictionary.h"
@@ -26,6 +28,8 @@ static volatile bool SafetyFlushPending = false;
 //
 volatile Int16U CONTROL_DiagCounter = 0;
 volatile float CONTROL_DiagData[VALUES_DIAG_SIZE];
+volatile Boolean RequestSaveToFlash = false;
+static Int64U CounterSaveTimer = 0;
 //
 
 // Forward functions
@@ -55,18 +59,37 @@ void CONTROL_Init()
 	DEVPROFILE_Init(&CONTROL_DispatchAction, &CycleActive);
 	DEVPROFILE_InitFEPService(FEPIndexes, FEPSized, FEPCounters, FEPDatas);
 
-	STF_LoadCounters();
 	CONTROL_InitStoragePointers();
+	STF_LoadCounters();
 
 	// Сброс значений
 	DEVPROFILE_ResetControlSection();
 	CONTROL_ResetToDefaultState();
+
+	// Принудительная остановка DPN при старте
+	DPN_RequestStop();
+	CounterSaveTimer = CONTROL_TimeCounter;
 }
 //------------------------------------------
 
 void CONTROL_Idle()
 {
 	CONTROL_SafetyCheck();
+	LOGIC_Process();
+
+	if(CONTROL_State != DS_InProcess && CONTROL_State != DS_InSelfTest)
+	{
+		if(RequestSaveToFlash)
+		{
+			RequestSaveToFlash = false;
+			STF_SaveDiagData();
+		}
+		else if(DataTable[REG_CNT_ACTIVE] && (CONTROL_TimeCounter - CounterSaveTimer) >= COUNTER_SAVE_TIMEOUT_MS)
+		{
+			STF_SaveCounterData();
+			CounterSaveTimer = CONTROL_TimeCounter;
+		}
+	}
 
 	DEVPROFILE_ProcessRequests();
 	CONTROL_UpdateWatchDog();
@@ -83,11 +106,15 @@ void CONTROL_SwitchToFault(Int16U Reason)
 		DataTable[REG_EXT_UNIT_EXT_DATA] = Error.ExtData;
 	}
 
+	DPN_ResetFsm();
+	LOGIC_Reset();
+	SELFTEST_Stop();
 	CONTROL_ResetOutputRegisters();
 
 	CONTROL_SetDeviceState(DS_Fault);
 	DataTable[REG_FAULT_REASON] = Reason;
 	DataTable[REG_OP_RESULT] = OPRESULT_FAIL;
+	RequestSaveToFlash = true;
 }
 //------------------------------------------
 
@@ -117,7 +144,9 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 		case ACT_ENABLE_POWER:
 			if(CONTROL_State == DS_None)
 			{
-				if(DPN_Enable())
+				if(DPN_SubState != DPNS_Idle || LOGIC_SubState != SS_Idle || SELFTEST_SubState != STS_None)
+					*pUserError = ERR_DEVICE_NOT_READY;
+				else if(DPN_Enable())
 					CONTROL_SetDeviceState(DS_Enabled);
 			}
 			else if(CONTROL_State != DS_Enabled)
@@ -125,10 +154,19 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 			break;
 
 		case ACT_DISABLE_POWER:
-			if(CONTROL_State == DS_Enabled)
+			if(CONTROL_State == DS_Enabled || CONTROL_State == DS_SafetyActive
+					|| CONTROL_State == DS_InSelfTest)
 			{
-				if(DPN_Disable())
+				if(DPN_SubState != DPNS_Idle || LOGIC_SubState != SS_Idle)
+					*pUserError = ERR_DEVICE_NOT_READY;
+				else if(SELFTEST_SubState != STS_None && CONTROL_State != DS_InSelfTest)
+					*pUserError = ERR_DEVICE_NOT_READY;
+				else
+				{
+					SELFTEST_Stop();
+					LOGIC_Deactivate();
 					CONTROL_SetDeviceState(DS_None);
+				}
 			}
 			else if(CONTROL_State != DS_None)
 					*pUserError = ERR_OPERATION_BLOCKED;
@@ -137,7 +175,7 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 		case ACT_CLR_FAULT:
 			if (CONTROL_State == DS_Fault)
 			{
-				if(DPN_ClearFault() && DPN_Disable())
+				if(DPN_ClearFault())
 				{
 					CONTROL_SetDeviceState(DS_None);
 					DataTable[REG_FAULT_REASON] = DF_NONE;
@@ -163,13 +201,59 @@ bool CONTROL_DispatchAction(Int16U ActionID, pInt16U pUserError)
 			break;
 
 		case ACT_SET_INACTIVE:
-			if(CONTROL_State == DS_Enabled || CONTROL_State == DS_SafetyActive || CONTROL_State == DS_SafetyTrig)
+			if(CONTROL_State == DS_Enabled || CONTROL_State == DS_SafetyActive
+					|| CONTROL_State == DS_SafetyTrig || CONTROL_State == DS_InProcess
+					|| CONTROL_State == DS_InSelfTest)
 			{
+				SELFTEST_Stop();
+				LOGIC_Deactivate();
 				DPN_ClearSafetyTrig();
 				CONTROL_SetDeviceState(DS_Enabled);
 			}
 			else
 				*pUserError = ERR_DEVICE_NOT_READY;
+			break;
+
+		case ACT_CONFIGURE:
+			if(CONTROL_State == DS_SafetyActive)
+			{
+				if(!LOGIC_Configure())
+					*pUserError = ERR_DEVICE_NOT_READY;
+			}
+			else
+				*pUserError = ERR_OPERATION_BLOCKED;
+			break;
+
+		case ACT_START_PULSE:
+			if(CONTROL_State == DS_SafetyActive && LOGIC_IsConfigured())
+			{
+				if(!LOGIC_StartPulse())
+					*pUserError = ERR_DEVICE_NOT_READY;
+			}
+			else
+				*pUserError = ERR_OPERATION_BLOCKED;
+			break;
+
+		case ACT_STOP_PULSE:
+			if(CONTROL_State == DS_InProcess && SELFTEST_SubState == STS_None)
+			{
+				LOGIC_StopProcess();
+				CONTROL_SetDeviceState(DS_SafetyActive);
+			}
+			else
+				*pUserError = ERR_OPERATION_BLOCKED;
+			break;
+
+		case ACT_SELF_TEST:
+			if(CONTROL_State == DS_Enabled || CONTROL_State == DS_SafetyActive)
+			{
+				if(LOGIC_SubState != SS_Idle || DPN_SubState != DPNS_Idle || SELFTEST_SubState != STS_None)
+					*pUserError = ERR_DEVICE_NOT_READY;
+				else
+					SELFTEST_Start();
+			}
+			else
+				*pUserError = ERR_OPERATION_BLOCKED;
 			break;
 
 		default:
@@ -184,8 +268,7 @@ void CONTROL_SafetyCheck()
 	if(SafetyFlushPending)
 	{
 		SafetyFlushPending = false;
-		LL_Safety(true);
-		LL_Safety(false);
+		LL_Safety();
 
 		if(DataTable[REG_SAFETY_ACTIVE])
 		{
@@ -204,7 +287,7 @@ void CONTROL_SafetyIrqTick()
 	if(SafetyTrig && !PrevSafetyTrig)
 	{
 		SafetyFlushPending = true;
-		LL_Safety(true);
+		LL_Safety();
 	}
 
 	PrevSafetyTrig = SafetyTrig;
@@ -240,7 +323,27 @@ void CONTROL_FinishedWithProblem(Int16U Problem)
 
 void CONTROL_InitStoragePointers()
 {
-	// Добавить необходимые регистры для сохранения
+	Int16U i;
+
+	for(i = 0; i < ZCRD_RELAY_COUNTERS; ++i)
+		STF_AssignCounterPointer(i, (Int32U)&CycleCounters[i]);
+
+	STF_AssignPointer(0, (Int32U)&DataTable[REG_DEV_STATE]);
+	STF_AssignPointer(1, (Int32U)&DataTable[REG_FAULT_REASON]);
+	STF_AssignPointer(2, (Int32U)&DataTable[REG_DISABLE_REASON]);
+	STF_AssignPointer(3, (Int32U)&DataTable[REG_WARNING]);
+	STF_AssignPointer(4, (Int32U)&DataTable[REG_PROBLEM]);
+	STF_AssignPointer(5, (Int32U)&DataTable[REG_OP_RESULT]);
+	STF_AssignPointer(6, (Int32U)&DataTable[REG_SELF_TEST_OP_RESULT]);
+	STF_AssignPointer(7, (Int32U)&DataTable[REG_SUB_STATE]);
+	STF_AssignPointer(8, (Int32U)&DataTable[REG_TEMPERATURE]);
+	STF_AssignPointer(9, (Int32U)&DataTable[REG_SELECTED_INDUCTANCE]);
+	STF_AssignPointer(10, (Int32U)&DataTable[REG_SELECTED_PULSE_WIDTH]);
+	STF_AssignPointer(11, (Int32U)&DataTable[REG_ADAPTER_MAX_VOLTAGE]);
+	STF_AssignPointer(12, (Int32U)&DataTable[REG_ADAPTER_MAX_CURRENT]);
+	STF_AssignPointer(13, (Int32U)&DataTable[REG_EXT_UNIT_ERROR_CODE]);
+	STF_AssignPointer(14, (Int32U)&DataTable[REG_EXT_UNIT_FUNCTION]);
+	STF_AssignPointer(15, (Int32U)&DataTable[REG_EXT_UNIT_EXT_DATA]);
 }
 //------------------------------------------
 
@@ -256,15 +359,10 @@ void CONTROL_HandleFrontPanelLamp()
 			FPLampCounter = 0;
 		}
 	}
-	else if(CONTROL_State == DS_None)
+	else
 	{
 		LL_SetStateFPLed(false);
 		FPLampCounter = 0;
-	}
-	else if(CONTROL_State != DS_SafetyTrig)
-	{
-		if(CONTROL_TimeCounter >= FPLampCounter)
-			LL_SetStateFPLed(false);
 	}
 }
 //-----------------------------------------------

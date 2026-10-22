@@ -5,6 +5,11 @@
 //
 #include "stdinc.h"
 
+// Timeouts
+//
+#define DPN_WAIT_MS					5000	// Ожидание Ready после команды, мс
+#define DPN_CAN_REQUEST_DELAY_MS	20		// Пауза между опросами состояния, мс
+
 // Types
 //
 // Состояния DPN (совпадают с DeviceState на стороне DPN)
@@ -18,6 +23,35 @@ typedef enum __DPNState
 	DPN_SafetyTrig		= 5,
 	DPN_InSelfTest		= 6
 } DPNState;
+
+// Состояния локальной FSM мастера DPN
+typedef enum __DPNSubState
+{
+	DPNS_Idle = 0,
+
+	DPNS_CfgWriteVoltage,
+	DPNS_CfgWriteCurrent,
+	DPNS_CfgWritePosition,
+	DPNS_CfgWriteMaxDuration,
+	DPNS_CfgCall,
+	DPNS_CfgWaitReady,
+	DPNS_CfgReadInductance,
+	DPNS_CfgReadDuration,
+
+	DPNS_StopCall,
+	DPNS_StopWait
+} DPNSubState;
+
+// Результат последней асинхронной операции FSM
+typedef enum __DPN_FsmResult
+{
+	DPN_FR_None			= 0,
+	DPN_FR_Busy			= 1,
+	DPN_FR_Ok			= 2,
+	DPN_FR_Fail			= 3
+} DPN_FsmResult;
+
+extern DPNSubState DPN_SubState;
 
 // Functions
 //
@@ -34,6 +68,17 @@ bool DPN_Config();
 bool DPN_ClearSafetyTrig();
 bool DPN_StartSelfTest();
 bool DPN_WriteReg(Int16U RegAddress, Int16U RegData);
+bool DPN_WriteRegFloat(Int16U RegAddress, float RegData);
 void DPN_ReadRegister(Int16U RegAddress, Int16U* RegData);
+bool DPN_ReadRegisterFloat(Int16U RegAddress, float* RegData);
+
+// Асинхронная FSM (один шаг CAN за вызов DPN_Process)
+void DPN_Process();
+DPN_FsmResult DPN_GetFsmResult();
+void DPN_ResetFsm();
+
+// Старт операций (false — FSM занята)
+Boolean DPN_RequestConfig();
+Boolean DPN_RequestStop();
 
 #endif /* CONTROLLER_DPN_H_ */

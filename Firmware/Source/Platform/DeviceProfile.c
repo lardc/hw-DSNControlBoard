@@ -12,10 +12,13 @@
 #include "Controller.h"
 #include "Constraints.h"
 #include "ZwNCAN.h"
-#include "ZwSCI.h"
+#include "ZwUSART.h"
 #include "ZwNFLASH.h"
 #include "BCCIMHighLevel.h"
 #include "SaveToFlash.h"
+#include "StorageDescription.h"
+#include "ZcRegistersDriver.h"
+#include "DeviceObjectDictionary.h"
 
 // Types
 //
@@ -77,10 +80,10 @@ void DEVPROFILE_Init(xCCI_FUNC_CallbackAction SpecializedDispatch, Boolean* Mask
 	MaskChangesFlag = MaskChanges;
 	
 	// Init interface
-	RS232_IOConfig.IO_SendArray16 = &ZwSCI_SendArray16;
-	RS232_IOConfig.IO_ReceiveArray16 = &ZwSCI_ReceiveArray16;
-	RS232_IOConfig.IO_GetBytesToReceive = &ZwSCI_GetBytesToReceive;
-	RS232_IOConfig.IO_ReceiveByte = &ZwSCI_ReceiveChar;
+	RS232_IOConfig.IO_SendArray16 = (SCCI_FUNC_SendArray16)&USART3_SendArray16;
+	RS232_IOConfig.IO_ReceiveArray16 = (SCCI_FUNC_ReceiveArray16)&USART3_ReceiveArray16;
+	RS232_IOConfig.IO_GetBytesToReceive = (SCCI_FUNC_GetBytesToReceive)&USART3_GetBytesToReceive;
+	RS232_IOConfig.IO_ReceiveByte = (SCCI_FUNC_ReceiveByte)&USART3_ReceiveChar;
 	//
 	CAN_IOConfig.IO_SendMessage = &NCAN_SendMessage;
 	CAN_IOConfig.IO_SendMessageEx = &NCAN_SendMessageEx;
@@ -191,6 +194,27 @@ static Boolean DEVPROFILE_DispatchAction(Int16U ActionID, pInt16U UserError)
 
 		case ACT_FLASH_CNT_READ_SYMBOL:
 			DataTable[REG_MEM_SYMBOL] = STF_ReadCounter();
+			break;
+
+		case ACT_SET_COUNTER:
+			if((Int16U)DataTable[REG_CNT_NUMBER] < ZCRD_RELAY_COUNTERS)
+				CycleCounters[(Int16U)DataTable[REG_CNT_NUMBER]] = (Int32U)DataTable[REG_CNT_VALUE];
+			else
+				*UserError = ERR_OPERATION_BLOCKED;
+			break;
+
+		case ACT_SAVE_COUNTERS:
+			STF_SaveCounterData();
+			break;
+
+		case ACT_ERASE_COUNTERS:
+			NFLASH_Unlock();
+			for(Int16U i = 0; i < CounterStorageSize; ++i)
+			{
+				*(pInt32U)CounterTablePointers[i].Address = 0;
+				CounterTablePointers[i].Value = 0;
+			}
+			STF_EraseCounterDataSector();
 			break;
 
 		case ACT_FLASH_CNT_INIT_READ:

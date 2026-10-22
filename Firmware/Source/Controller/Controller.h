@@ -16,7 +16,8 @@ typedef enum __DeviceState
 	DS_Enabled			= 3,
 	DS_SafetyActive		= 4,
 	DS_SafetyTrig		= 5,
-	DS_InSelfTest		= 6
+	DS_InProcess		= 6,
+	DS_InSelfTest		= 7
 } DeviceState;
 
 // Variables
@@ -24,6 +25,7 @@ typedef enum __DeviceState
 extern volatile Int64U CONTROL_TimeCounter;
 extern volatile DeviceState CONTROL_State;
 extern volatile Int16U CONTROL_DiagCounter;
+extern volatile Boolean RequestSaveToFlash;
 //
 extern volatile float CONTROL_DiagData[VALUES_DIAG_SIZE];
 
